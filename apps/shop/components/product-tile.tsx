@@ -1,5 +1,3 @@
-import Link from "next/link";
-
 import type { CatalogProduct } from "@/lib/catalog";
 import { formatPrice } from "@/lib/site-data";
 
@@ -15,7 +13,7 @@ export function ProductTile({
   imageClassName = "min-h-[27rem] sm:min-h-[31rem]",
 }: ProductTileProps) {
   return (
-    <Link href={`/services/${product.slug}`} className={`group block ${className}`}>
+    <a href={`/services/${product.slug}`} className={`group block ${className}`}>
       <article className="space-y-4 sm:space-y-6 transition-transform duration-300 group-hover:-translate-y-0.5">
         <div className="rounded-[2.35rem] border border-[var(--color-line)] bg-[linear-gradient(180deg,rgba(255,253,249,0.88),rgba(246,238,228,0.94))] p-4 shadow-[0_26px_64px_rgba(53,38,24,0.05)] transition-[box-shadow,border-color] duration-300 group-hover:border-[var(--color-line-strong)] group-hover:shadow-[0_34px_78px_rgba(53,38,24,0.08)] sm:p-5">
           <div
@@ -43,6 +41,6 @@ export function ProductTile({
           </div>
         </div>
       </article>
-    </Link>
+    </a>
   );
 }
