@@ -37,9 +37,7 @@ export default async function CollectionPage() {
         </ScrollReveal>
       </section>
 
-      <ScrollReveal direction="scale">
-        <CollectionCatalog products={products} />
-      </ScrollReveal>
+      <CollectionCatalog products={products} />
     </div>
   );
 }
