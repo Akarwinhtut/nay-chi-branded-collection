@@ -47,6 +47,15 @@ export default async function HomePage() {
               given the same weight, the price stays visible without pressure, and the store
               remains present without taking over the room.
             </p>
+            <Link
+              href="/services"
+              className="inline-flex w-fit items-center gap-3 border-b border-[var(--color-line)] pb-3 text-[var(--color-ink)] transition-colors duration-300 hover:border-[var(--color-line-strong)]"
+            >
+              <span className="text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-[rgba(94,67,39,0.62)]">
+                View all bags
+              </span>
+              <span className="text-sm text-[rgba(29,29,31,0.58)]">{products.length} pieces</span>
+            </Link>
           </div>
         </ScrollReveal>
       </section>
