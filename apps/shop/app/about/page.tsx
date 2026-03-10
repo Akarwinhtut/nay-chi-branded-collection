@@ -1,3 +1,6 @@
+import Link from "next/link";
+
+import { PageIntro } from "@/components/page-intro";
 import { ScrollReveal } from "@/components/scroll-reveal";
 import { getPublicCatalogProducts } from "@/lib/catalog";
 import { buildMetadata } from "@/lib/metadata";
@@ -16,12 +19,23 @@ export default async function StoryPage() {
   const contactLinks = contactMethods.filter((contact) => contact.label !== "Map");
 
   return (
-    <div className="mx-auto flex max-w-5xl flex-col gap-16 lg:gap-20">
-      <section className="grid gap-10 lg:grid-cols-[0.42fr_0.58fr] lg:items-start">
+    <div className="mx-auto flex max-w-6xl flex-col gap-16 lg:gap-20">
+      <PageIntro
+        eyebrow="Store"
+        title="A quieter way to browse branded bags in Yangon."
+        description={profile.bio}
+        detail="The store stays warm and direct: a smaller edit, visible prices, and the freedom to browse without pressure."
+        stats={visitDetails.slice(0, 2).map((detail) => ({
+          label: detail.label,
+          value: detail.value,
+        }))}
+      />
+
+      <section className="grid gap-10 lg:grid-cols-[0.44fr_0.56fr] lg:items-start">
         <ScrollReveal direction="right">
-          <div className="rounded-[2.5rem] border border-[var(--color-line)] bg-[linear-gradient(180deg,rgba(255,253,249,0.82),rgba(246,238,228,0.94))] p-4 shadow-[0_26px_64px_rgba(53,38,24,0.05)] sm:p-5">
+          <div className="rounded-[2.5rem] border border-[var(--color-line)] bg-[linear-gradient(180deg,rgba(255,253,249,0.82),rgba(246,238,228,0.94))] p-4 shadow-[0_24px_56px_rgba(53,38,24,0.05)] sm:p-5">
             <div
-              className="editorial-photo min-h-[30rem] sm:min-h-[38rem] lg:min-h-[44rem]"
+              className="editorial-photo min-h-[28rem] sm:min-h-[36rem] lg:min-h-[42rem]"
               style={{
                 backgroundImage: imageProduct ? `url(${imageProduct.image.src})` : undefined,
                 backgroundPosition: imageProduct?.image.position ?? "center center",
@@ -30,22 +44,12 @@ export default async function StoryPage() {
           </div>
         </ScrollReveal>
 
-        <ScrollReveal className="space-y-6" direction="left" soft>
-          <div className="space-y-5">
-            <p className="eyebrow">Store</p>
-            <h1 className="font-display text-[4rem] font-medium leading-[0.9] tracking-[-0.04em] text-[var(--color-ink)] sm:text-[5.6rem]">
-              A quieter way to browse branded bags in Yangon.
-            </h1>
-            <p className="max-w-2xl text-base leading-8 text-[rgba(29,29,31,0.66)] sm:text-lg">
-              {profile.bio}
-            </p>
-          </div>
-
+        <ScrollReveal className="space-y-8" direction="left" soft>
           <div className="grid gap-0 border-y border-[var(--color-line)]">
             {visitDetails.slice(0, 4).map((detail) => (
               <article
                 key={detail.label}
-                className="grid gap-3 border-b border-[var(--color-line)] py-5 last:border-b-0 sm:grid-cols-[0.34fr_0.66fr] sm:items-start sm:gap-6"
+                className="grid gap-3 border-b border-[var(--color-line)] py-5 last:border-b-0 sm:grid-cols-[0.32fr_0.68fr] sm:items-start sm:gap-6"
               >
                 <p className="signal-label">{detail.label}</p>
                 <div className="space-y-2">
@@ -58,15 +62,19 @@ export default async function StoryPage() {
             ))}
           </div>
 
-          <div className="space-y-3 border-t border-[var(--color-line)] pt-5">
+          <div className="space-y-4">
             <p className="signal-label">Store contact</p>
-            <div className="mt-4 flex flex-wrap gap-x-5 gap-y-3 text-sm text-[rgba(29,29,31,0.68)]">
+            <div className="flex flex-wrap gap-x-5 gap-y-3 text-sm text-[rgba(29,29,31,0.68)]">
               {contactLinks.map((contact) => (
                 <a key={contact.label} href={contact.href} className="footer-link text-[var(--color-ink)]">
                   {contact.label}: {contact.displayValue}
                 </a>
               ))}
             </div>
+            <Link href="/contact" className="quiet-link">
+              <span className="signal-label !text-[rgba(94,67,39,0.7)]">Talk to the store</span>
+              <span className="text-sm text-[rgba(29,29,31,0.58)]">Open contact details and map</span>
+            </Link>
           </div>
         </ScrollReveal>
       </section>

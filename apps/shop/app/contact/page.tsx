@@ -1,11 +1,10 @@
 import Link from "next/link";
 
-import { ProductConfigurator } from "@/components/product-configurator";
-import { ScrollReveal } from "@/components/scroll-reveal";
+import { PageIntro } from "@/components/page-intro";
 import { SectionHeading } from "@/components/section-heading";
 import { getPublicCatalogProducts } from "@/lib/catalog";
 import { buildMetadata } from "@/lib/metadata";
-import { contactMethods, faqs, visitDetails } from "@/lib/site-data";
+import { contactMethods, faqs, formatPrice, profile, visitDetails } from "@/lib/site-data";
 
 const telegram = contactMethods.find((contact) => contact.label === "Telegram");
 const email = contactMethods.find((contact) => contact.label === "Email");
@@ -28,185 +27,193 @@ export default async function ContactPage({
   const selectedProduct = product
     ? products.find((item) => item.slug === product) ?? null
     : null;
-  const isFocusedOrder = Boolean(selectedProduct);
+  const emailAddress = email?.href.replace("mailto:", "") ?? "";
+  const selectedProductMailto =
+    selectedProduct && emailAddress
+      ? `mailto:${emailAddress}?subject=${encodeURIComponent(
+          `Question about ${selectedProduct.name}`,
+        )}&body=${encodeURIComponent(
+          `Hello ${profile.name}, I would like to ask about ${selectedProduct.name}. Please share the next step and current availability.`,
+        )}`
+      : email?.href;
 
   return (
-    <div className="mx-auto flex max-w-7xl flex-col gap-20 lg:gap-24">
-      {isFocusedOrder ? (
-        <section className="grid gap-6 lg:grid-cols-[1fr_auto] lg:items-end">
-          <ScrollReveal className="space-y-6" soft>
-            <SectionHeading
-              eyebrow="Selected bag"
-              title={`Finish the last details for ${selectedProduct?.name}.`}
-              description="The bag is already chosen. Pick the color, size, and quantity, then send one short message to the store."
-            />
-          </ScrollReveal>
-
-          <ScrollReveal direction="left">
-            <div className="flex flex-col gap-3 sm:flex-row lg:flex-col">
-              <Link href={`/services/${selectedProduct?.slug ?? ""}`} className="ghost-button">
+    <div className="mx-auto flex max-w-6xl flex-col gap-16 lg:gap-20">
+      <PageIntro
+        eyebrow={selectedProduct ? "Selected bag" : "Contact"}
+        title={selectedProduct ? `Ask about ${selectedProduct.name}.` : "Talk to the store."}
+        description={
+          selectedProduct
+            ? "If you want more photos, current availability, or the next step, Telegram is still the quickest route. Email and the map are here when that feels easier."
+            : "Telegram is the fastest way to ask about a bag. Email stays available for longer notes, and the map is here when you want to visit in person."
+        }
+        detail={
+          selectedProduct
+            ? "Mention the bag name when you message and the store can continue from there."
+            : "Most shoppers only need a short message, store hours, and the address."
+        }
+        stats={
+          selectedProduct
+            ? [
+                { label: "Price", value: formatPrice(selectedProduct.price) },
+                { label: "Collection", value: selectedProduct.collection },
+              ]
+            : [
+                { label: "Fastest reply", value: "Telegram" },
+                { label: "Store hours", value: visitDetails[1]?.value ?? "" },
+              ]
+        }
+        action={
+          selectedProduct ? (
+            <>
+              <Link href={`/services/${selectedProduct.slug}`} className="ghost-button">
                 Back to bag
               </Link>
               {telegram ? (
                 <a href={telegram.href} className="cta-button">
-                  Ask on Telegram
+                  Open Telegram
                 </a>
               ) : null}
-            </div>
-          </ScrollReveal>
-        </section>
-      ) : (
-        <section className="grid gap-10 lg:grid-cols-[0.96fr_1.04fr] lg:items-center">
-          <ScrollReveal className="space-y-6" soft>
-            <SectionHeading
-              eyebrow="Talk to the store"
-              title="Choose the contact method that feels easiest."
-              description="Telegram for quick replies, email for longer notes, and Google Maps when you want to visit in person."
-            />
+            </>
+          ) : undefined
+        }
+      />
 
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {selectedProduct ? (
+        <section className="grid gap-8 lg:grid-cols-[0.42fr_0.58fr] lg:items-start">
+          <div className="rounded-[2.4rem] border border-[var(--color-line)] bg-[linear-gradient(180deg,rgba(255,253,249,0.82),rgba(246,238,228,0.94))] p-4 shadow-[0_24px_56px_rgba(53,38,24,0.05)] sm:p-5">
+            <div
+              className="editorial-photo min-h-[24rem] sm:min-h-[32rem]"
+              style={{
+                backgroundImage: `url(${selectedProduct.image.src})`,
+                backgroundPosition: selectedProduct.image.position ?? "center center",
+              }}
+            />
+          </div>
+
+          <div className="space-y-6">
+            <div className="space-y-4">
+              <p className="signal-label">The piece you selected</p>
+              <h2 className="font-display text-[3rem] leading-[0.94] text-[var(--color-ink)] sm:text-[4rem]">
+                {selectedProduct.name}
+              </h2>
+              <p className="max-w-2xl text-base leading-8 text-[rgba(29,29,31,0.64)]">
+                {selectedProduct.shortDescription} If you want to continue, the store can confirm
+                color availability, stock, and the next step directly in the message.
+              </p>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
               {telegram ? (
                 <a href={telegram.href} className="signal-card rounded-[1.8rem] p-5">
                   <p className="signal-label">Fastest reply</p>
-                  <h2 className="mt-3 font-display text-[2.3rem] leading-[0.92] text-[var(--color-ink)]">
+                  <h3 className="mt-3 font-display text-[2.2rem] leading-[0.92] text-[var(--color-ink)]">
                     Telegram
-                  </h2>
-                  <p className="mt-3 text-sm leading-7 text-[rgba(32,24,20,0.64)]">
-                    {telegram.displayValue}
-                  </p>
-                </a>
-              ) : null}
-
-              {email ? (
-                <a href={email.href} className="signal-card rounded-[1.8rem] p-5">
-                  <p className="signal-label">Detailed note</p>
-                  <h2 className="mt-3 font-display text-[2.3rem] leading-[0.92] text-[var(--color-ink)]">
-                    Email
-                  </h2>
-                  <p className="mt-3 text-sm leading-7 text-[rgba(32,24,20,0.64)]">
-                    {email.displayValue}
-                  </p>
-                </a>
-              ) : null}
-
-              {map ? (
-                <a href={map.href} className="signal-card rounded-[1.8rem] p-5">
-                  <p className="signal-label">Store visit</p>
-                  <h2 className="mt-3 font-display text-[2.3rem] leading-[0.92] text-[var(--color-ink)]">
-                    Google Maps
-                  </h2>
-                  <p className="mt-3 text-sm leading-7 text-[rgba(32,24,20,0.64)]">
-                    {map.displayValue}
-                  </p>
-                </a>
-              ) : null}
-            </div>
-          </ScrollReveal>
-
-          <ScrollReveal direction="left">
-            <div className="support-card rounded-[2.5rem] p-6 sm:p-8">
-              <p className="eyebrow !text-[rgba(255,249,241,0.72)]">Visit notes</p>
-              <div className="mt-6 space-y-4">
-                {visitDetails.map((detail) => (
-                  <div
-                    key={detail.label}
-                    className="border-b border-[rgba(255,249,241,0.14)] pb-4 last:border-b-0 last:pb-0"
-                  >
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[rgba(255,249,241,0.56)]">
-                      {detail.label}
-                    </p>
-                    <h3 className="mt-2 font-display text-[2rem] leading-[0.92] text-[var(--color-surface)]">
-                      {detail.value}
-                    </h3>
-                    <p className="mt-2 text-sm leading-7 text-[rgba(255,249,241,0.78)]">
-                      {detail.note}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </ScrollReveal>
-        </section>
-      )}
-
-      <ScrollReveal direction="scale">
-        <ProductConfigurator
-          products={products}
-          key={product ?? "planner"}
-          anchorId="planner"
-          eyebrow={isFocusedOrder ? "Order form" : "Order planner"}
-          title={
-            isFocusedOrder
-              ? "Only the final choices remain."
-              : "Build the order in a few clear steps."
-          }
-          description={
-            isFocusedOrder
-              ? "Your bag is already selected. Confirm the last details and send the message."
-              : "Choose the bag, pick the finish, then copy a ready-made message. If you want, you can still skip straight to Telegram."
-          }
-          initialProductSlug={product}
-          streamlined={isFocusedOrder}
-          lockInitialProduct={isFocusedOrder}
-        />
-      </ScrollReveal>
-
-      {isFocusedOrder ? (
-        <section className="space-y-6">
-          <ScrollReveal direction="scale">
-            <div className="choice-card rounded-[2rem] p-6 sm:p-7">
-              <p className="signal-label">Still unsure?</p>
-              <h2 className="mt-3 font-display text-[2.6rem] leading-[0.94] text-[var(--color-ink)]">
-                Send the bag name or a screenshot instead.
-              </h2>
-              <p className="body-copy mt-3 max-w-2xl text-base leading-8">
-                If the form feels like too much, just open Telegram or email and send the bag name.
-                The store can finish the order with you directly.
-              </p>
-
-              <div className="mt-5 flex flex-col gap-3 sm:flex-row">
-                {telegram ? (
-                  <a href={telegram.href} className="cta-button">
-                    Open Telegram
-                  </a>
-                ) : null}
-                {email ? (
-                  <a href={email.href} className="ghost-button">
-                    Email the store
-                  </a>
-                ) : null}
-                <Link href="/services" className="ghost-button">
-                  See all bags
-                </Link>
-              </div>
-            </div>
-          </ScrollReveal>
-        </section>
-      ) : (
-        <section className="space-y-8">
-          <ScrollReveal soft>
-            <SectionHeading
-              eyebrow="Questions"
-              title="A few answers before you order."
-              description="Only the details most shoppers ask about."
-            />
-          </ScrollReveal>
-
-          <div className="grid gap-5 lg:grid-cols-3">
-            {faqs.map((item, index) => (
-              <ScrollReveal key={item.question} delayMs={index * 70} direction="scale">
-                <article className="surface-panel rounded-[1.8rem] p-6 sm:p-7">
-                  <p className="signal-label">Question 0{index + 1}</p>
-                  <h3 className="mt-4 font-display text-[2.1rem] leading-[0.92] text-[var(--color-ink)]">
-                    {item.question}
                   </h3>
-                  <p className="body-copy mt-3 text-sm leading-7">{item.answer}</p>
-                </article>
-              </ScrollReveal>
-            ))}
+                  <p className="mt-3 text-sm leading-7 text-[rgba(29,29,31,0.64)]">
+                    Mention {selectedProduct.name} and ask for the current stock.
+                  </p>
+                </a>
+              ) : null}
+
+              {selectedProductMailto ? (
+                <a href={selectedProductMailto} className="signal-card rounded-[1.8rem] p-5">
+                  <p className="signal-label">Longer note</p>
+                  <h3 className="mt-3 font-display text-[2.2rem] leading-[0.92] text-[var(--color-ink)]">
+                    Email
+                  </h3>
+                  <p className="mt-3 text-sm leading-7 text-[rgba(29,29,31,0.64)]">
+                    Use email if you want to ask in more detail before visiting.
+                  </p>
+                </a>
+              ) : null}
+            </div>
           </div>
         </section>
-      )}
+      ) : null}
+
+      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {telegram ? (
+          <a href={telegram.href} className="signal-card rounded-[1.8rem] p-5 sm:p-6">
+            <p className="signal-label">Fastest reply</p>
+            <h2 className="mt-3 font-display text-[2.2rem] leading-[0.92] text-[var(--color-ink)]">
+              Telegram
+            </h2>
+            <p className="mt-3 text-sm leading-7 text-[rgba(29,29,31,0.64)]">
+              {telegram.note ?? telegram.displayValue}
+            </p>
+          </a>
+        ) : null}
+
+        {email ? (
+          <a href={email.href} className="signal-card rounded-[1.8rem] p-5 sm:p-6">
+            <p className="signal-label">Longer note</p>
+            <h2 className="mt-3 font-display text-[2.2rem] leading-[0.92] text-[var(--color-ink)]">
+              Email
+            </h2>
+            <p className="mt-3 text-sm leading-7 text-[rgba(29,29,31,0.64)]">
+              {email.note ?? email.displayValue}
+            </p>
+          </a>
+        ) : null}
+
+        {map ? (
+          <a href={map.href} className="signal-card rounded-[1.8rem] p-5 sm:p-6">
+            <p className="signal-label">Store visit</p>
+            <h2 className="mt-3 font-display text-[2.2rem] leading-[0.92] text-[var(--color-ink)]">
+              Google Maps
+            </h2>
+            <p className="mt-3 text-sm leading-7 text-[rgba(29,29,31,0.64)]">
+              {map.note ?? map.displayValue}
+            </p>
+          </a>
+        ) : null}
+      </section>
+
+      <section className="grid gap-8 border-t border-[var(--color-line)] pt-8 lg:grid-cols-[0.4fr_0.6fr]">
+        <SectionHeading
+          eyebrow="Visit notes"
+          title="Only the details most shoppers ask for."
+          description="Opening hours, response rhythm, and the store address stay here in one quiet place."
+        />
+
+        <div className="grid gap-0 border-y border-[var(--color-line)]">
+          {visitDetails.map((detail) => (
+            <article
+              key={detail.label}
+              className="grid gap-3 border-b border-[var(--color-line)] py-5 last:border-b-0 sm:grid-cols-[0.34fr_0.66fr] sm:items-start sm:gap-6"
+            >
+              <p className="signal-label">{detail.label}</p>
+              <div className="space-y-2">
+                <p className="text-lg font-semibold leading-7 text-[var(--color-ink)]">
+                  {detail.value}
+                </p>
+                <p className="text-sm leading-7 text-[rgba(29,29,31,0.62)]">{detail.note}</p>
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="space-y-6">
+        <SectionHeading
+          eyebrow="Questions"
+          title="A few details before you visit."
+          description="Only the basics most people ask about."
+        />
+
+        <div className="grid gap-5 md:grid-cols-2">
+          {faqs.map((item, index) => (
+            <article key={item.question} className="surface-panel rounded-[1.8rem] p-6 sm:p-7">
+              <p className="signal-label">Question 0{index + 1}</p>
+              <h3 className="mt-4 font-display text-[2rem] leading-[0.94] text-[var(--color-ink)]">
+                {item.question}
+              </h3>
+              <p className="body-copy mt-3 text-sm leading-7">{item.answer}</p>
+            </article>
+          ))}
+        </div>
+      </section>
     </div>
   );
 }

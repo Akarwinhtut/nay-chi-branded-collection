@@ -34,6 +34,25 @@ export function ScrollReveal({
       return;
     }
 
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const isCompactViewport = window.matchMedia("(max-width: 767px)").matches;
+
+    if (prefersReducedMotion || isCompactViewport || typeof IntersectionObserver === "undefined") {
+      return;
+    }
+
+    node.dataset.ready = "true";
+    let frameId = 0;
+    const rect = node.getBoundingClientRect();
+    const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+    const visibilityBoundary = viewportHeight * (1 - Math.min(threshold, 0.4));
+
+    if (rect.top <= visibilityBoundary && rect.bottom >= 0) {
+      frameId = window.requestAnimationFrame(() => {
+        setVisible(true);
+      });
+    }
+
     const observer = new IntersectionObserver(
       (entries) => {
         const [entry] = entries;
@@ -65,6 +84,11 @@ export function ScrollReveal({
     observer.observe(node);
 
     return () => {
+      if (frameId) {
+        window.cancelAnimationFrame(frameId);
+      }
+
+      delete node.dataset.ready;
       observer.disconnect();
     };
   }, [once, threshold]);

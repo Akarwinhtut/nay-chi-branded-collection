@@ -10,14 +10,14 @@ type ProductTileProps = {
 export function ProductTile({
   product,
   className = "",
-  imageClassName = "min-h-[27rem] sm:min-h-[31rem]",
+  imageClassName = "min-h-[23rem] sm:min-h-[29rem]",
 }: ProductTileProps) {
   return (
     <a href={`/services/${product.slug}`} className={`group block ${className}`}>
-      <article className="space-y-4 sm:space-y-6 transition-transform duration-300 group-hover:-translate-y-0.5">
-        <div className="rounded-[2.35rem] border border-[var(--color-line)] bg-[linear-gradient(180deg,rgba(255,253,249,0.88),rgba(246,238,228,0.94))] p-4 shadow-[0_26px_64px_rgba(53,38,24,0.05)] transition-[box-shadow,border-color] duration-300 group-hover:border-[var(--color-line-strong)] group-hover:shadow-[0_34px_78px_rgba(53,38,24,0.08)] sm:p-5">
+      <article className="space-y-4 sm:space-y-5 transition-transform duration-300 group-hover:-translate-y-0.5">
+        <div className="rounded-[2.25rem] border border-[var(--color-line)] bg-[linear-gradient(180deg,rgba(255,253,249,0.84),rgba(246,238,228,0.92))] p-4 shadow-[0_24px_56px_rgba(53,38,24,0.04)] transition-[box-shadow,border-color] duration-300 group-hover:border-[var(--color-line-strong)] group-hover:shadow-[0_30px_72px_rgba(53,38,24,0.07)] sm:p-5">
           <div
-            className={`editorial-photo ${imageClassName}`}
+            className={`editorial-photo transition-transform duration-500 group-hover:scale-[1.01] ${imageClassName}`}
             style={{
               backgroundImage: `url(${product.image.src})`,
               backgroundPosition: product.image.position ?? "center center",
@@ -25,17 +25,17 @@ export function ProductTile({
           />
         </div>
 
-        <div className="space-y-4 px-1 sm:space-y-5">
-          <p className="text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-[rgba(94,67,39,0.58)]">
+        <div className="space-y-3 px-1 sm:space-y-4">
+          <p className="signal-label">
             {product.collection} / {product.category}
           </p>
 
-          <div className="grid gap-3 border-t border-[var(--color-line)] pt-3 sm:grid-cols-[1fr_auto] sm:items-end sm:pt-4">
-            <h3 className="font-display text-[2.2rem] font-medium leading-[0.9] tracking-[-0.04em] text-[var(--color-ink)] sm:text-[3.2rem]">
+          <div className="grid gap-3 border-t border-[var(--color-line)] pt-4 sm:grid-cols-[1fr_auto] sm:items-end">
+            <h3 className="font-display text-[2.05rem] font-medium leading-[0.92] tracking-[-0.04em] text-[var(--color-ink)] sm:text-[2.95rem]">
               {product.name}
             </h3>
 
-            <p className="text-sm font-semibold tracking-[0.03em] text-[var(--color-accent-strong)] sm:pb-1 sm:text-base">
+            <p className="text-sm font-semibold tracking-[0.03em] text-[var(--color-accent-strong)] sm:pb-1">
               {formatPrice(product.price)}
             </p>
           </div>

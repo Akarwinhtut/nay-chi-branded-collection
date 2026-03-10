@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 
 import { navigation, profile } from "@/lib/site-data";
 
-const mobileLinks = [...navigation, { label: "Policies", href: "/policies" }];
+const mobileLinks = [...navigation, { label: "Contact", href: "/contact" }, { label: "Policies", href: "/policies" }];
 
 export function SiteHeader() {
   const pathname = usePathname();
@@ -30,17 +30,17 @@ export function SiteHeader() {
   }
 
   return (
-    <header className="sticky top-0 z-50 px-4 pt-4 sm:px-6">
+    <header className="sticky top-0 z-50 px-4 pt-3 sm:px-6">
       <div
-        className={`mx-auto max-w-6xl rounded-[1.7rem] border px-4 py-3 transition-[background-color,box-shadow] duration-300 md:px-6 ${
+        className={`mx-auto max-w-7xl rounded-[1.9rem] border px-4 py-3.5 transition-[background-color,box-shadow,border-color] duration-300 md:px-6 ${
           scrolled
-            ? "border-[var(--color-line)] bg-[rgba(255,251,246,0.86)] shadow-[0_20px_48px_rgba(53,38,24,0.05)] backdrop-blur-xl"
-            : "border-transparent bg-transparent"
+            ? "border-[var(--color-line)] bg-[rgba(251,247,241,0.88)] shadow-[0_18px_48px_rgba(53,38,24,0.05)] backdrop-blur-xl"
+            : "border-[rgba(255,255,255,0.58)] bg-[rgba(251,247,241,0.58)] backdrop-blur-md"
         }`}
       >
         <div className="flex items-center justify-between gap-4">
           <Link href="/" className="min-w-0" onClick={() => setMenuOpen(false)}>
-            <span className="block truncate text-[1.15rem] font-semibold tracking-[-0.045em] text-[var(--color-ink)] sm:text-[1.35rem]">
+            <span className="block truncate text-[1.1rem] font-semibold tracking-[-0.045em] text-[var(--color-ink)] sm:text-[1.28rem]">
               {profile.name}
             </span>
             <span className="mt-1 block text-[11px] tracking-[0.06em] text-[rgba(94,67,39,0.54)]">
@@ -48,25 +48,33 @@ export function SiteHeader() {
             </span>
           </Link>
 
-          <button
-            type="button"
-            onClick={() => setMenuOpen((open) => !open)}
-            aria-expanded={menuOpen}
-            aria-label={menuOpen ? "Close menu" : "Open menu"}
-            className="inline-flex min-w-[4.5rem] items-center justify-center rounded-full border border-[var(--color-line)] bg-white px-4 py-2.5 text-sm font-semibold text-[var(--color-ink)] md:hidden"
-          >
-            {menuOpen ? "Close" : "Menu"}
-          </button>
+          <div className="flex items-center gap-2 md:hidden">
+            <Link
+              href="/services"
+              className="inline-flex min-h-[2.9rem] items-center justify-center rounded-full border border-[var(--color-line)] bg-[rgba(255,255,255,0.78)] px-4 text-sm font-semibold text-[var(--color-ink)]"
+            >
+              Bags
+            </Link>
+            <button
+              type="button"
+              onClick={() => setMenuOpen((open) => !open)}
+              aria-expanded={menuOpen}
+              aria-label={menuOpen ? "Close menu" : "Open menu"}
+              className="inline-flex min-h-[2.9rem] min-w-[4.6rem] items-center justify-center rounded-full border border-[var(--color-line)] bg-white px-4 text-sm font-semibold text-[var(--color-ink)]"
+            >
+              {menuOpen ? "Close" : "Menu"}
+            </button>
+          </div>
 
-          <nav className="hidden items-center gap-8 md:flex">
+          <nav className="hidden items-center gap-2 md:flex">
             {navigation.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
-                className={`nav-link text-sm font-semibold transition-colors duration-200 ${
+                className={`inline-flex min-h-[2.9rem] items-center rounded-full px-4 text-sm font-semibold transition-[background-color,color,box-shadow] duration-200 ${
                   isActive(item.href)
-                    ? "nav-link--active text-[var(--color-ink)]"
-                    : "text-[rgba(29,29,31,0.58)] hover:text-[var(--color-ink)]"
+                    ? "bg-[rgba(255,255,255,0.84)] text-[var(--color-ink)] shadow-[0_12px_28px_rgba(53,38,24,0.05)]"
+                    : "text-[rgba(29,29,31,0.58)] hover:bg-[rgba(255,255,255,0.64)] hover:text-[var(--color-ink)]"
                 }`}
               >
                 {item.label}
@@ -82,10 +90,10 @@ export function SiteHeader() {
                 key={item.href}
                 href={item.href}
                 onClick={() => setMenuOpen(false)}
-                className={`menu-link rounded-[1.2rem] border px-4 py-3 text-sm font-semibold ${
+                className={`menu-link rounded-[1.35rem] border px-4 py-3 text-sm font-semibold ${
                   isActive(item.href)
-                    ? "border-[var(--color-line-strong)] bg-white text-[var(--color-ink)]"
-                    : "border-[var(--color-line)] bg-[rgba(255,255,255,0.8)] text-[rgba(29,29,31,0.72)]"
+                    ? "border-[var(--color-line-strong)] bg-white text-[var(--color-ink)] shadow-[0_12px_28px_rgba(53,38,24,0.05)]"
+                    : "border-[var(--color-line)] bg-[rgba(255,255,255,0.74)] text-[rgba(29,29,31,0.72)]"
                 }`}
               >
                 {item.label}

@@ -14,9 +14,9 @@ import {
 } from "@/lib/site-data";
 
 export const metadata = buildMetadata({
-  title: "Photos",
+  title: "Gallery",
   description:
-    "Explore styling ideas from Nay Chi Branded Collection, pairing bags, wallets, and travel pieces into cleaner sets.",
+    "Explore styling ideas from Nay Chi Branded Collection through quieter pairings and photo studies.",
   pathname: "/projects",
 });
 
@@ -29,20 +29,16 @@ export default async function LookbookPage() {
       <section className="grid gap-10 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
         <ScrollReveal className="space-y-6" soft>
           <SectionHeading
-            eyebrow="Style gallery"
-            title="See how the collection feels before you decide."
-            description="Use these photo sets to compare shape, contrast, and color mood before opening a bag detail page."
+            eyebrow="Gallery"
+            title="A quieter photo journal for the collection."
+            description="Use these studies to compare shape, contrast, and tone before opening a bag detail page."
           />
         </ScrollReveal>
 
         <ScrollReveal direction="left">
           <div className="surface-panel rounded-[2.2rem] p-6 sm:p-8">
             <div className="grid gap-4 sm:grid-cols-3">
-              {[
-                "Everyday mood",
-                "Evening contrast",
-                "Brighter carryalls",
-              ].map((item, index) => (
+              {["Pairing", "Contrast", "Lighter tones"].map((item, index) => (
                 <article key={item} className="signal-card rounded-[1.7rem] p-4">
                   <p className="signal-label">View 0{index + 1}</p>
                   <p className="mt-3 font-display text-[2rem] leading-[0.92] text-[var(--color-ink)]">
@@ -60,7 +56,7 @@ export default async function LookbookPage() {
           <SectionHeading
             eyebrow="Photo stories"
             title="Three ways to read the collection."
-            description="Look for shape, size, and balance. The gallery is meant to support the buying decision, not distract from it."
+            description="Look for shape, scale, and color mood. The gallery is here to support the browsing experience, not compete with it."
           />
         </ScrollReveal>
 
@@ -109,8 +105,9 @@ export default async function LookbookPage() {
                     <div className="grid gap-4 sm:grid-cols-2">
                       {featuredItems.map((item) =>
                         item ? (
-                          <article
+                          <Link
                             key={item.slug}
+                            href={`/services/${item.slug}`}
                             className="choice-card rounded-[1.6rem] p-4"
                           >
                             <p className="signal-label">{item.category}</p>
@@ -120,7 +117,7 @@ export default async function LookbookPage() {
                             <p className="mt-3 text-sm font-semibold text-[var(--color-accent-strong)]">
                               {formatPrice(item.price)}
                             </p>
-                          </article>
+                          </Link>
                         ) : null,
                       )}
                     </div>
@@ -135,9 +132,9 @@ export default async function LookbookPage() {
       <section className="space-y-8">
         <ScrollReveal soft>
           <SectionHeading
-            eyebrow="Best sellers"
-            title="The pieces shoppers return to most."
-            description="If you want a shorter shortlist, start here."
+            eyebrow="Open next"
+            title="A few pieces worth opening after the gallery."
+            description="These are simply a shorter path back into the product pages."
           />
         </ScrollReveal>
 
@@ -166,8 +163,11 @@ export default async function LookbookPage() {
                       {formatPrice(product.price)}
                     </p>
                   </div>
-                  <Link href={`/contact?product=${product.slug}#planner`} className="ghost-button">
-                    Start with this bag
+                  <Link href={`/services/${product.slug}`} className="quiet-link">
+                    <span className="signal-label !text-[rgba(94,67,39,0.7)]">Open bag</span>
+                    <span className="text-sm text-[rgba(29,29,31,0.58)]">
+                      Read the full product page
+                    </span>
                   </Link>
                 </div>
               </article>

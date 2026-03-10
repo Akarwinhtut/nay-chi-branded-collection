@@ -1,22 +1,26 @@
 import Link from "next/link";
 
-import { contactMethods, navigation, profile, visitDetails } from "@/lib/site-data";
+import { contactMethods, navigation, visitDetails } from "@/lib/site-data";
 
-const footerNavigation = [...navigation, { label: "Policies", href: "/policies" }];
+const footerNavigation = [
+  ...navigation,
+  { label: "Contact", href: "/contact" },
+  { label: "Policies", href: "/policies" },
+];
 
 export function SiteFooter() {
   return (
-    <footer className="px-4 pb-8 pt-14 sm:px-6 sm:pt-20">
-      <div className="mx-auto max-w-6xl border-t border-[var(--color-line)] px-2 pt-8 sm:px-0 sm:pt-10">
-        <div className="grid gap-10 lg:grid-cols-[1.2fr_0.8fr]">
+    <footer className="px-4 pb-10 pt-16 sm:px-6 sm:pb-12 sm:pt-24">
+      <div className="mx-auto max-w-7xl border-t border-[var(--color-line)] px-1 pt-8 sm:px-0 sm:pt-10">
+        <div className="grid gap-12 lg:grid-cols-[1.12fr_0.88fr]">
           <div className="space-y-4">
-            <p className="eyebrow">{profile.name}</p>
-            <h2 className="font-display max-w-2xl text-[2.2rem] font-medium leading-[0.96] tracking-[-0.04em] text-[var(--color-ink)] sm:text-[4rem]">
-              {profile.tagline}
+            <p className="eyebrow">Nay Chi Branded Collection</p>
+            <h2 className="font-display max-w-xl text-[2rem] font-medium leading-[0.96] tracking-[-0.04em] text-[var(--color-ink)] sm:text-[3.5rem]">
+              A quieter gallery of branded bags in Yangon.
             </h2>
-            <p className="hidden max-w-xl text-base leading-8 text-[rgba(29,29,31,0.64)] sm:block">
-              A quieter online storefront for branded bags, shaped more like a gallery than a sales
-              pitch.
+            <p className="max-w-lg text-sm leading-7 text-[rgba(29,29,31,0.62)] sm:text-base">
+              Clear prices, calm photography, and store details that stay easy to reach without
+              pulling attention away from the collection.
             </p>
           </div>
 

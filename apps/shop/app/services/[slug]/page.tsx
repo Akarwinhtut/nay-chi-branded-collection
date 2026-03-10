@@ -2,7 +2,6 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { ProductTile } from "@/components/product-tile";
-import { ScrollReveal } from "@/components/scroll-reveal";
 import { SectionHeading } from "@/components/section-heading";
 import {
   getPublicCatalogProductBySlug,
@@ -123,7 +122,7 @@ export default async function BagDetailPage({
         dangerouslySetInnerHTML={{ __html: JSON.stringify(productJsonLd) }}
       />
 
-      <div className="mx-auto flex max-w-5xl flex-col gap-16 lg:gap-20">
+      <div className="mx-auto flex max-w-6xl flex-col gap-16 lg:gap-20">
         <section className="space-y-6">
           <div className="flex flex-wrap items-center gap-3 text-sm text-[rgba(29,29,31,0.56)]">
             <Link href="/" className="footer-link hover:text-[var(--color-ink)]">
@@ -138,72 +137,51 @@ export default async function BagDetailPage({
           </div>
         </section>
 
-        <section className="grid gap-10 lg:grid-cols-[0.48fr_0.52fr] lg:items-start">
-          <ScrollReveal direction="right">
-            <div className="rounded-[2.5rem] border border-[var(--color-line)] bg-[linear-gradient(180deg,rgba(255,253,249,0.82),rgba(246,238,228,0.94))] p-4 shadow-[0_26px_64px_rgba(53,38,24,0.05)] sm:p-5">
+        <section className="grid gap-10 lg:grid-cols-[0.5fr_0.5fr] lg:items-start">
+          <div className="space-y-5 lg:sticky lg:top-28">
+            <div className="rounded-[2.5rem] border border-[var(--color-line)] bg-[linear-gradient(180deg,rgba(255,253,249,0.82),rgba(246,238,228,0.94))] p-4 shadow-[0_24px_56px_rgba(53,38,24,0.05)] sm:p-5">
               <div
-                className="editorial-photo min-h-[34rem] sm:min-h-[46rem]"
+                className="editorial-photo min-h-[30rem] sm:min-h-[42rem]"
                 style={{
                   backgroundImage: `url(${product.image.src})`,
                   backgroundPosition: product.image.position ?? "center center",
                 }}
               />
             </div>
-          </ScrollReveal>
 
-          <ScrollReveal className="space-y-6" direction="left" soft>
+            <div className="grid gap-3 sm:grid-cols-3">
+              {facts.map((fact) => (
+                <article
+                  key={fact.label}
+                  className="rounded-[1.5rem] border border-[var(--color-line)] bg-[rgba(255,255,255,0.46)] px-4 py-4"
+                >
+                  <p className="signal-label">{fact.label}</p>
+                  <p className="mt-2 text-sm font-semibold text-[var(--color-ink)]">{fact.value}</p>
+                </article>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-8">
             <div className="space-y-4">
               <p className="eyebrow">
                 {product.collection} / {product.category}
               </p>
-              <h1 className="font-display text-[4.2rem] font-medium leading-[0.88] tracking-[-0.04em] text-[var(--color-ink)] sm:text-[5.8rem]">
+              <h1 className="font-display text-[4rem] font-medium leading-[0.88] tracking-[-0.04em] text-[var(--color-ink)] sm:text-[5.4rem]">
                 {product.name}
               </h1>
               <p className="text-[1.8rem] font-semibold leading-[1] tracking-[0.01em] text-[var(--color-accent-strong)] sm:text-[2.15rem]">
                 {formatPrice(product.price)}
               </p>
-
-              <div className="grid gap-0 border-y border-[var(--color-line)] sm:hidden">
-                {facts.map((fact, index) => (
-                  <article
-                    key={fact.label}
-                    className={`space-y-3 py-4 ${
-                      index < facts.length - 1 ? "border-b border-[var(--color-line)]" : ""
-                    }`}
-                  >
-                    <p className="signal-label">{fact.label}</p>
-                    <p className="text-base font-semibold text-[var(--color-ink)]">
-                      {fact.value}
-                    </p>
-                  </article>
-                ))}
-              </div>
-
-              <p className="max-w-xl text-base leading-8 text-[rgba(29,29,31,0.68)] sm:hidden">
+              <p className="max-w-xl text-base leading-8 text-[rgba(29,29,31,0.68)] sm:text-lg">
                 {product.shortDescription}
               </p>
-              <p className="hidden max-w-xl text-base leading-8 text-[rgba(29,29,31,0.68)] sm:text-lg sm:block">
+              <p className="max-w-2xl text-base leading-8 text-[rgba(29,29,31,0.62)]">
                 {product.description}
               </p>
             </div>
 
-            <div className="hidden gap-0 border-y border-[var(--color-line)] sm:grid sm:grid-cols-3">
-              {facts.map((fact, index) => (
-                <article
-                  key={fact.label}
-                  className={`space-y-3 py-5 ${
-                    index < facts.length - 1 ? "sm:border-r sm:border-[var(--color-line)]" : ""
-                  } ${index === 0 ? "sm:pr-5" : ""} ${
-                    index === 1 ? "sm:px-5" : ""
-                  } ${index === 2 ? "sm:pl-5" : ""}`}
-                >
-                  <p className="signal-label">{fact.label}</p>
-                  <p className="text-base font-semibold text-[var(--color-ink)]">{fact.value}</p>
-                </article>
-              ))}
-            </div>
-
-            <div className="rounded-[2rem] border border-[var(--color-line)] bg-[rgba(255,251,246,0.62)] p-5 sm:p-6">
+            <div className="rounded-[2rem] border border-[var(--color-line)] bg-[rgba(255,251,246,0.58)] p-5 sm:p-6">
               <p className="signal-label">Available colors</p>
               <div className="mt-4 grid gap-3">
                 {product.variants.map((variant) => (
@@ -241,44 +219,44 @@ export default async function BagDetailPage({
               </div>
             </div>
 
-            <div className="space-y-3 border-t border-[var(--color-line)] pt-5">
-              <p className="signal-label">From the store</p>
-              <p className="mt-3 max-w-xl text-base leading-8 text-[rgba(29,29,31,0.68)]">
-                {product.detail} Available at {visitDetails[0]?.value}. {visitDetails[1]?.value}.
-              </p>
+            <div className="grid gap-6 border-t border-[var(--color-line)] pt-6 sm:grid-cols-[1fr_auto] sm:items-end">
+              <div className="space-y-3">
+                <p className="signal-label">From the store</p>
+                <p className="max-w-xl text-base leading-8 text-[rgba(29,29,31,0.68)]">
+                  {product.detail} Available at {visitDetails[0]?.value}. {visitDetails[1]?.value}.
+                </p>
+              </div>
 
-              <div className="mt-4 flex flex-wrap gap-x-5 gap-y-3 text-sm text-[rgba(29,29,31,0.62)]">
+              <div className="flex flex-wrap gap-3 text-sm text-[rgba(29,29,31,0.62)]">
                 {telegram ? (
-                  <a href={telegram.href} className="footer-link text-[var(--color-ink)]">
+                  <a href={telegram.href} className="ghost-button">
                     Telegram
                   </a>
                 ) : null}
                 {email ? (
-                  <a href={email.href} className="footer-link text-[var(--color-ink)]">
+                  <a href={email.href} className="ghost-button">
                     Email
                   </a>
                 ) : null}
               </div>
             </div>
-          </ScrollReveal>
+          </div>
         </section>
 
         {relatedProducts.length > 0 ? (
           <section className="space-y-8">
-            <ScrollReveal soft>
-              <SectionHeading
-                eyebrow="More from the collection"
-                title="Similar pieces, with the same quiet treatment."
-                description="A few nearby bags to compare by mood, size, or shape."
-              />
-            </ScrollReveal>
+            <SectionHeading
+              eyebrow="More from the collection"
+              title="Similar pieces, with the same quiet treatment."
+              description="A few nearby bags to compare by mood, size, or shape."
+            />
 
             <div className="grid gap-6 lg:grid-cols-3">
               {relatedProducts.map((related) => (
                 <ProductTile
                   key={related.slug}
                   product={related}
-                  imageClassName="min-h-[23rem]"
+                  imageClassName="min-h-[21rem]"
                 />
               ))}
             </div>

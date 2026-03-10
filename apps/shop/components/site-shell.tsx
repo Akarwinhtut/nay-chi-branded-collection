@@ -15,7 +15,7 @@ export function SiteShell({ children }: SiteShellProps) {
         <RouteScrollReset />
       </Suspense>
       <SiteHeader />
-      <main className="px-4 pb-16 pt-6 sm:px-6 sm:pb-20 sm:pt-8 lg:pt-10">{children}</main>
+      <main className="px-4 pb-20 pt-5 sm:px-6 sm:pb-24 sm:pt-7 lg:px-8 lg:pt-9">{children}</main>
       <SiteFooter />
     </div>
   );

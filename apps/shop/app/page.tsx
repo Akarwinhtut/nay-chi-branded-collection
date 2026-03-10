@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { PageIntro } from "@/components/page-intro";
 import { ProductTile } from "@/components/product-tile";
 import { ScrollReveal } from "@/components/scroll-reveal";
 import { getLatestCatalogProducts, getPublicCatalogProducts } from "@/lib/catalog";
@@ -16,52 +17,35 @@ export const metadata = buildMetadata({
 export default async function HomePage() {
   const products = await getPublicCatalogProducts();
   const latestProducts = getLatestCatalogProducts(products);
-  const [arrivalStory, ...arrivalSelections] = latestProducts;
+  const [arrivalStory] = latestProducts;
 
   return (
-    <div className="mx-auto flex max-w-5xl flex-col gap-16 sm:gap-20 lg:gap-24">
-      <section className="grid gap-6 pt-4 sm:gap-8 sm:pt-6 lg:grid-cols-[0.34fr_0.66fr] lg:items-start lg:pt-10">
-        <ScrollReveal soft>
-          <div className="space-y-4 lg:pt-3">
-            <p className="eyebrow">Nay Chi Branded Collection</p>
-            <p className="max-w-xs text-sm leading-7 text-[rgba(29,29,31,0.58)] sm:hidden">
-              A quieter edit of branded bags in Yangon.
-            </p>
-            <p className="hidden max-w-xs text-sm leading-7 text-[rgba(29,29,31,0.58)] sm:block">
-              A boutique bag store in Yangon with a calmer online presence and a warm, composed
-              edit.
-            </p>
-          </div>
-        </ScrollReveal>
-
-        <ScrollReveal soft>
-          <div className="space-y-6">
-            <h1 className="font-display text-[4.3rem] font-medium leading-[0.86] tracking-[-0.04em] text-[var(--color-ink)] sm:text-[6.2rem] lg:text-[7.2rem]">
-              Quiet luxury, kept approachable.
-            </h1>
-            <p className="max-w-lg text-base leading-8 text-[rgba(29,29,31,0.64)] sm:hidden">
-              A calm gallery of branded bags with clear prices and no pressure.
-            </p>
-            <p className="hidden max-w-lg text-base leading-8 text-[rgba(29,29,31,0.64)] sm:block sm:text-lg">
-              A warm edit of branded bags, arranged with the calm of a gallery wall. Each piece is
-              given the same weight, the price stays visible without pressure, and the store
-              remains present without taking over the room.
-            </p>
-            <Link
-              href="/services"
-              className="inline-flex w-fit items-center gap-3 border-b border-[var(--color-line)] pb-3 text-[var(--color-ink)] transition-colors duration-300 hover:border-[var(--color-line-strong)]"
-            >
-              <span className="text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-[rgba(94,67,39,0.62)]">
-                View all bags
-              </span>
-              <span className="text-sm text-[rgba(29,29,31,0.58)]">{products.length} pieces</span>
-            </Link>
-          </div>
-        </ScrollReveal>
-      </section>
+    <div className="mx-auto flex max-w-6xl flex-col gap-16 sm:gap-20 lg:gap-24">
+      <PageIntro
+        eyebrow={profile.name}
+        title="The collection, quietly presented."
+        description="A calm gallery of branded bags with visible prices, equal treatment for every piece, and just enough store detail to stay grounded."
+        detail="A boutique bag store in Yangon, arranged online with a slower, warmer pace."
+        stats={[
+          {
+            label: "In the edit",
+            value: `${products.length} bags shown without featured ranking`,
+          },
+          {
+            label: "Visit",
+            value: visitDetails[0]?.value ?? profile.location,
+          },
+        ]}
+        action={
+          <Link href="/services" className="quiet-link">
+            <span className="signal-label !text-[rgba(94,67,39,0.7)]">View all bags</span>
+            <span className="text-sm text-[rgba(29,29,31,0.58)]">{products.length} pieces</span>
+          </Link>
+        }
+      />
 
       <section>
-        <div className="grid gap-x-8 gap-y-12 md:grid-cols-2">
+        <div className="grid gap-x-8 gap-y-14 md:grid-cols-2">
           {products.map((product) => (
             <ProductTile key={product.slug} product={product} />
           ))}
@@ -69,12 +53,12 @@ export default async function HomePage() {
       </section>
 
       {arrivalStory ? (
-        <section className="grid gap-8 sm:gap-10 lg:grid-cols-[0.54fr_0.46fr] lg:items-center">
+        <section className="grid gap-8 border-t border-[var(--color-line)] pt-8 sm:gap-10 lg:grid-cols-[0.44fr_0.56fr] lg:items-center">
           <ScrollReveal direction="right" soft distance={20}>
             <Link href={`/services/${arrivalStory.slug}`} className="group block">
-              <div className="rounded-[2.6rem] border border-[var(--color-line)] bg-[linear-gradient(180deg,rgba(255,253,249,0.9),rgba(247,240,232,0.96))] p-4 shadow-[0_26px_64px_rgba(53,38,24,0.05)] transition-[box-shadow,border-color,transform] duration-300 group-hover:-translate-y-0.5 group-hover:border-[var(--color-line-strong)] group-hover:shadow-[0_34px_80px_rgba(53,38,24,0.08)] sm:p-5">
+              <div className="rounded-[2.4rem] border border-[var(--color-line)] bg-[linear-gradient(180deg,rgba(255,253,249,0.82),rgba(247,240,232,0.94))] p-4 shadow-[0_24px_56px_rgba(53,38,24,0.05)] transition-[box-shadow,border-color,transform] duration-300 group-hover:-translate-y-0.5 group-hover:border-[var(--color-line-strong)] group-hover:shadow-[0_30px_72px_rgba(53,38,24,0.08)] sm:p-5">
                 <div
-                  className="editorial-photo min-h-[26rem] sm:min-h-[38rem] lg:min-h-[42rem]"
+                  className="editorial-photo min-h-[24rem] sm:min-h-[35rem] lg:min-h-[38rem]"
                   style={{
                     backgroundImage: `url(${arrivalStory.image.src})`,
                     backgroundPosition: arrivalStory.image.position ?? "center center",
@@ -85,23 +69,16 @@ export default async function HomePage() {
           </ScrollReveal>
 
           <ScrollReveal className="space-y-6" direction="left" delayMs={80} distance={18} soft>
-            <p className="eyebrow">New in the store</p>
-            <h2 className="font-display text-[3.4rem] font-medium leading-[0.9] tracking-[-0.04em] text-[var(--color-ink)] sm:text-[4.8rem]">
-              A recent arrival, shown quietly.
+            <p className="eyebrow">Recent arrival</p>
+            <h2 className="font-display text-[3.1rem] font-medium leading-[0.92] tracking-[-0.04em] text-[var(--color-ink)] sm:text-[4.4rem]">
+              One recent piece, kept in the same calm line.
             </h2>
-            <p className="max-w-xl text-base leading-8 text-[rgba(29,29,31,0.64)] sm:hidden">
-              {arrivalStory.name}, added to the collection with the same calm presentation as
-              everything else.
-            </p>
-            <p className="hidden max-w-xl text-base leading-8 text-[rgba(29,29,31,0.64)] sm:block sm:text-lg">
-              {arrivalStory.name} comes into the collection with a softer mood and the same calm
-              presentation as everything else. {arrivalStory.shortDescription}
+            <p className="max-w-xl text-base leading-8 text-[rgba(29,29,31,0.64)] sm:text-lg">
+              {arrivalStory.name} enters the collection without changing the balance of the page.{" "}
+              {arrivalStory.shortDescription}
             </p>
 
-            <Link
-              href={`/services/${arrivalStory.slug}`}
-              className="group inline-flex items-center gap-3 border-b border-[var(--color-line)] pb-3 text-[var(--color-ink)]"
-            >
+            <Link href={`/services/${arrivalStory.slug}`} className="quiet-link">
               <span className="font-display text-[2.3rem] font-medium leading-[0.92] tracking-[-0.04em]">
                 {arrivalStory.name}
               </span>
@@ -109,28 +86,6 @@ export default async function HomePage() {
                 {formatPrice(arrivalStory.price)}
               </span>
             </Link>
-
-            {arrivalSelections.length > 0 ? (
-              <div className="hidden gap-0 border-y border-[var(--color-line)] sm:grid">
-                {arrivalSelections.slice(0, 2).map((product) => (
-                  <Link
-                    key={product.slug}
-                    href={`/services/${product.slug}`}
-                    className="grid gap-3 border-b border-[var(--color-line)] py-4 last:border-b-0 sm:grid-cols-[1fr_auto] sm:items-end"
-                  >
-                    <div className="space-y-1">
-                      <p className="signal-label">Also in the recent edit</p>
-                      <p className="font-display text-[2rem] font-medium leading-[0.94] tracking-[-0.04em] text-[var(--color-ink)]">
-                        {product.name}
-                      </p>
-                    </div>
-                    <p className="text-sm font-semibold tracking-[0.03em] text-[var(--color-accent-strong)]">
-                      {formatPrice(product.price)}
-                    </p>
-                  </Link>
-                ))}
-              </div>
-            ) : null}
           </ScrollReveal>
         </section>
       ) : null}
@@ -140,16 +95,18 @@ export default async function HomePage() {
           <div className="grid gap-8 lg:grid-cols-[0.42fr_0.58fr] lg:items-start">
             <div className="space-y-4">
               <p className="eyebrow">About the store</p>
-              <h2 className="font-display text-[3.2rem] font-medium leading-[0.92] tracking-[-0.04em] text-[var(--color-ink)] sm:text-[4.6rem]">
-                More boutique gallery than online marketplace.
+              <h2 className="font-display text-[3rem] font-medium leading-[0.94] tracking-[-0.04em] text-[var(--color-ink)] sm:text-[4.2rem]">
+                A smaller store, shown with more room to breathe.
               </h2>
-              <p className="max-w-xl text-base leading-8 text-[rgba(29,29,31,0.66)] sm:hidden">
-                A smaller, warmer edit of branded bags in Yangon, shown with clear prices and a
-                calmer pace.
-              </p>
-              <p className="hidden max-w-xl text-base leading-8 text-[rgba(29,29,31,0.66)] sm:block">
+              <p className="max-w-xl text-base leading-8 text-[rgba(29,29,31,0.66)]">
                 {profile.bio}
               </p>
+              <Link href="/about" className="quiet-link">
+                <span className="signal-label !text-[rgba(94,67,39,0.7)]">Read the store note</span>
+                <span className="text-sm text-[rgba(29,29,31,0.58)]">
+                  Hours, location, and contact
+                </span>
+              </Link>
             </div>
 
             <div className="grid gap-0 border-t border-[var(--color-line)] lg:grid-cols-3 lg:border-l lg:border-t-0">
@@ -162,9 +119,7 @@ export default async function HomePage() {
                   <p className="text-lg font-semibold leading-7 text-[var(--color-ink)]">
                     {detail.value}
                   </p>
-                  <p className="hidden text-sm leading-7 text-[rgba(29,29,31,0.62)] sm:block">
-                    {detail.note}
-                  </p>
+                  <p className="text-sm leading-7 text-[rgba(29,29,31,0.62)]">{detail.note}</p>
                 </article>
               ))}
             </div>
