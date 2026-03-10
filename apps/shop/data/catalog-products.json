@@ -1,0 +1,254 @@
+[
+  {
+    "slug": "david-jones-taupe-carryall",
+    "name": "David Jones Taupe Carryall",
+    "collection": "David Jones",
+    "category": "Top Handle",
+    "occasion": "Work and daily carry",
+    "price": 168000,
+    "shortDescription": "A structured taupe carryall with clean lines, polished hardware, and room for everyday essentials.",
+    "description": "This David Jones carryall gives the store a refined daily anchor. The shape feels practical enough for work, clean enough for dressing up, and soft enough to keep the whole collection calm.",
+    "material": "Pebbled faux leather",
+    "detail": "Top handle body with zip closure, polished feet, and a detachable long strap.",
+    "badges": [
+      "Featured",
+      "Daily carry"
+    ],
+    "imageSrc": "/products/david-jones/taupe-carryall.jpg",
+    "imageAlt": "Taupe David Jones structured carryall with top handles and a detachable strap.",
+    "imagePosition": "center center",
+    "isFeatured": true,
+    "isNewArrival": false,
+    "isPublished": true,
+    "displayOrder": 0,
+    "variants": [
+      {
+        "color": "Taupe",
+        "swatch": "#84796d",
+        "finish": "Soft pebble grain",
+        "imageSrc": "",
+        "imageAlt": "Taupe David Jones structured carryall with top handles and a detachable strap.",
+        "imagePosition": "",
+        "sizes": [
+          {
+            "label": "Standard",
+            "stock": 3
+          }
+        ]
+      }
+    ],
+    "id": "local-david-jones-taupe-carryall",
+    "createdAt": "2026-03-10T16:30:00.000Z",
+    "updatedAt": "2026-03-10T16:30:00.000Z"
+  },
+  {
+    "slug": "david-jones-camel-slim-shoulder",
+    "name": "David Jones Camel Slim Shoulder",
+    "collection": "David Jones",
+    "category": "Shoulder Bag",
+    "occasion": "Dinner and city plans",
+    "price": 124000,
+    "shortDescription": "A slim camel shoulder bag with a long strap, smooth flap, and a dressier evening shape.",
+    "description": "This slim shoulder bag is the easy evening piece in the collection. It keeps the line minimal, the hardware quiet, and the silhouette light enough for quick nights out.",
+    "material": "Smooth faux leather",
+    "detail": "Long adjustable shoulder strap with a front flap and a polished clasp plate.",
+    "badges": [
+      "Evening",
+      "New arrival"
+    ],
+    "imageSrc": "/products/david-jones/camel-slim-shoulder.jpg",
+    "imageAlt": "Camel David Jones slim shoulder bag with a long strap and flap closure.",
+    "imagePosition": "center center",
+    "isFeatured": true,
+    "isNewArrival": true,
+    "isPublished": true,
+    "displayOrder": 1,
+    "variants": [
+      {
+        "color": "Camel",
+        "swatch": "#b79272",
+        "finish": "Soft matte finish",
+        "imageSrc": "",
+        "imageAlt": "Camel David Jones slim shoulder bag with a long strap and flap closure.",
+        "imagePosition": "",
+        "sizes": [
+          {
+            "label": "Standard",
+            "stock": 4
+          }
+        ]
+      }
+    ],
+    "id": "local-david-jones-camel-slim-shoulder",
+    "createdAt": "2026-03-10T16:30:00.000Z",
+    "updatedAt": "2026-03-10T16:30:00.000Z"
+  },
+  {
+    "slug": "david-jones-pearl-lock-mini",
+    "name": "David Jones Pearl Lock Mini",
+    "collection": "David Jones",
+    "category": "Mini Bag",
+    "occasion": "Gift and occasion dressing",
+    "price": 146000,
+    "shortDescription": "A pale pearl mini bag with a top handle, crossbody strap, and soft gold lock detail.",
+    "description": "This pearl-toned mini bag brings a lighter, softer note to the shop. It works well as a gift bag, an event bag, or the clean contrast piece beside darker everyday styles.",
+    "material": "Fine-grain faux leather",
+    "detail": "Top handle mini shape with detachable strap and front lock hardware.",
+    "badges": [
+      "Gift edit",
+      "Soft neutral"
+    ],
+    "imageSrc": "/products/david-jones/pearl-lock-mini.jpg",
+    "imageAlt": "Pearl David Jones mini top-handle bag with front lock hardware and shoulder strap.",
+    "imagePosition": "center center",
+    "isFeatured": false,
+    "isNewArrival": true,
+    "isPublished": true,
+    "displayOrder": 2,
+    "variants": [
+      {
+        "color": "Pearl",
+        "swatch": "#ddd6d3",
+        "finish": "Soft pearl sheen",
+        "imageSrc": "",
+        "imageAlt": "Pearl David Jones mini top-handle bag with front lock hardware and shoulder strap.",
+        "imagePosition": "",
+        "sizes": [
+          {
+            "label": "Mini",
+            "stock": 3
+          }
+        ]
+      }
+    ],
+    "id": "local-david-jones-pearl-lock-mini",
+    "createdAt": "2026-03-10T16:30:00.000Z",
+    "updatedAt": "2026-03-10T16:30:00.000Z"
+  },
+  {
+    "slug": "david-jones-black-slouch-hobo",
+    "name": "David Jones Black Slouch Hobo",
+    "collection": "David Jones",
+    "category": "Hobo Bag",
+    "occasion": "Everyday and travel days",
+    "price": 154000,
+    "shortDescription": "A soft black hobo with a relaxed shoulder line and an extra strap for hands-free days.",
+    "description": "This black slouch hobo gives the collection depth and ease. It is the piece for customers who want one darker bag that still feels polished, modern, and easy to use every day.",
+    "material": "Pebbled faux leather",
+    "detail": "Relaxed zip-top shoulder shape with a removable long strap and soft body.",
+    "badges": [
+      "Best seller",
+      "Black edit"
+    ],
+    "imageSrc": "/products/david-jones/black-slouch-hobo.jpg",
+    "imageAlt": "Black David Jones slouch hobo bag with shoulder strap and detachable crossbody strap.",
+    "imagePosition": "center center",
+    "isFeatured": true,
+    "isNewArrival": false,
+    "isPublished": true,
+    "displayOrder": 3,
+    "variants": [
+      {
+        "color": "Black",
+        "swatch": "#161616",
+        "finish": "Deep pebble texture",
+        "imageSrc": "",
+        "imageAlt": "Black David Jones slouch hobo bag with shoulder strap and detachable crossbody strap.",
+        "imagePosition": "",
+        "sizes": [
+          {
+            "label": "Standard",
+            "stock": 5
+          }
+        ]
+      }
+    ],
+    "id": "local-david-jones-black-slouch-hobo",
+    "createdAt": "2026-03-10T16:30:00.000Z",
+    "updatedAt": "2026-03-10T16:30:00.000Z"
+  },
+  {
+    "slug": "david-jones-ivory-belt-tote",
+    "name": "David Jones Ivory Belt Tote",
+    "collection": "David Jones",
+    "category": "Tote Bag",
+    "occasion": "Work, gifting, and all-day carry",
+    "price": 162000,
+    "shortDescription": "A clean ivory tote with belt detail, shoulder handle, and a calm everyday silhouette.",
+    "description": "This ivory tote keeps the shop feeling bright and expensive. The shape is practical for long days, while the belt hardware keeps it feeling more elevated than a basic tote.",
+    "material": "Textured faux leather",
+    "detail": "Open tote body with belt-front detail, shoulder handle, and detachable long strap.",
+    "badges": [
+      "Light edit",
+      "Work bag"
+    ],
+    "imageSrc": "/products/david-jones/ivory-belt-tote.jpg",
+    "imageAlt": "Ivory David Jones tote bag with front belt detail and detachable long strap.",
+    "imagePosition": "center center",
+    "isFeatured": false,
+    "isNewArrival": false,
+    "isPublished": true,
+    "displayOrder": 4,
+    "variants": [
+      {
+        "color": "Ivory",
+        "swatch": "#e5e0d3",
+        "finish": "Light grain finish",
+        "imageSrc": "",
+        "imageAlt": "Ivory David Jones tote bag with front belt detail and detachable long strap.",
+        "imagePosition": "",
+        "sizes": [
+          {
+            "label": "Tall",
+            "stock": 3
+          }
+        ]
+      }
+    ],
+    "id": "local-david-jones-ivory-belt-tote",
+    "createdAt": "2026-03-10T16:30:00.000Z",
+    "updatedAt": "2026-03-10T16:30:00.000Z"
+  },
+  {
+    "slug": "mossdoom-ivory-city-tote",
+    "name": "Mossdoom Ivory City Tote",
+    "collection": "Mossdoom",
+    "category": "Tote Bag",
+    "occasion": "Daily carry and gifting",
+    "price": 132000,
+    "shortDescription": "A tall ivory tote with warm brown handles and a sharper, cleaner city shape.",
+    "description": "The Mossdoom tote gives the collection a quieter architectural note. It is simple, tall, easy to style, and strong for customers who want a roomy tote without extra detail.",
+    "material": "Smooth structured faux leather",
+    "detail": "Tall open tote with slim brown handles and a clean unbroken front panel.",
+    "badges": [
+      "Minimal",
+      "New label"
+    ],
+    "imageSrc": "/products/mossdoom/ivory-city-tote.jpg",
+    "imageAlt": "Ivory Mossdoom tote with warm brown handles and a tall minimal silhouette.",
+    "imagePosition": "center center",
+    "isFeatured": false,
+    "isNewArrival": true,
+    "isPublished": true,
+    "displayOrder": 5,
+    "variants": [
+      {
+        "color": "Ivory",
+        "swatch": "#ebe7df",
+        "finish": "Smooth matte finish",
+        "imageSrc": "",
+        "imageAlt": "Ivory Mossdoom tote with warm brown handles and a tall minimal silhouette.",
+        "imagePosition": "",
+        "sizes": [
+          {
+            "label": "Tall",
+            "stock": 2
+          }
+        ]
+      }
+    ],
+    "id": "local-mossdoom-ivory-city-tote",
+    "createdAt": "2026-03-10T16:30:00.000Z",
+    "updatedAt": "2026-03-10T16:30:00.000Z"
+  }
+]

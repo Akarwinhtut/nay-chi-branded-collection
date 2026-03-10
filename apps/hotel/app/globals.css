@@ -1,0 +1,96 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-background: #f7f1e6;
+  --color-foreground: #1b1613;
+  --font-sans: var(--font-manrope);
+  --font-display: var(--font-cormorant);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 10% 8%, rgba(255, 255, 255, 0.84), transparent 24%),
+    radial-gradient(circle at 84% 12%, rgba(205, 179, 146, 0.28), transparent 20%),
+    linear-gradient(180deg, #fcf7ef 0%, #f6eedf 52%, #f7f1e6 100%);
+  color: #1b1613;
+  font-family: var(--font-manrope), sans-serif;
+}
+
+::selection {
+  background: rgba(101, 64, 34, 0.16);
+  color: #1b1613;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.scroll-reveal {
+  opacity: 0;
+  filter: blur(8px);
+  transform: translate3d(0, var(--reveal-distance, 34px), 0);
+  transition:
+    opacity 820ms cubic-bezier(0.25, 0.74, 0.22, 0.99) var(--reveal-delay, 0ms),
+    filter 820ms cubic-bezier(0.25, 0.74, 0.22, 0.99) var(--reveal-delay, 0ms),
+    transform 980ms cubic-bezier(0.25, 0.74, 0.22, 0.99) var(--reveal-delay, 0ms);
+  will-change: transform, opacity, filter;
+}
+
+.scroll-reveal[data-direction="down"] {
+  transform: translate3d(0, calc(var(--reveal-distance, 34px) * -1), 0);
+}
+
+.scroll-reveal[data-direction="left"] {
+  transform: translate3d(var(--reveal-distance, 34px), 0, 0);
+}
+
+.scroll-reveal[data-direction="right"] {
+  transform: translate3d(calc(var(--reveal-distance, 34px) * -1), 0, 0);
+}
+
+.scroll-reveal[data-direction="scale"] {
+  transform: scale(0.975);
+}
+
+.scroll-reveal--soft {
+  filter: blur(6px);
+}
+
+.scroll-reveal--visible {
+  opacity: 1;
+  filter: blur(0);
+  transform: translate3d(0, 0, 0) scale(1);
+}
+
+a:focus-visible,
+button:focus-visible {
+  outline: 3px solid rgba(101, 64, 34, 0.24);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .scroll-reveal,
+  .scroll-reveal[data-direction="down"],
+  .scroll-reveal[data-direction="left"],
+  .scroll-reveal[data-direction="right"],
+  .scroll-reveal[data-direction="scale"] {
+    opacity: 1;
+    filter: none;
+    transform: none;
+    transition: none;
+  }
+}

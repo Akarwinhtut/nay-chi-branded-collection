@@ -1,0 +1,15 @@
+{
+  "name": "website-workspace",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev:shop",
+    "dev:shop": "npm run dev --workspace @website/shop",
+    "dev:hotel": "npm run dev --workspace @website/hotel",
+    "build": "npm run build --workspace @website/shop && npm run build --workspace @website/hotel",
+    "lint": "npm run lint --workspace @website/shop && npm run lint --workspace @website/hotel"
+  }
+}
