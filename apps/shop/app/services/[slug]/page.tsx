@@ -92,6 +92,11 @@ export default async function BagDetailPage({
     product.collection,
     product.category,
   );
+  const facts = [
+    { label: "Category", value: product.category },
+    { label: "Material", value: product.material },
+    { label: "In store", value: `${totalStock} pieces` },
+  ];
   const productJsonLd = {
     "@context": "https://schema.org",
     "@type": "Product",
@@ -157,24 +162,45 @@ export default async function BagDetailPage({
               <p className="text-[1.8rem] font-semibold leading-[1] tracking-[0.01em] text-[var(--color-accent-strong)] sm:text-[2.15rem]">
                 {formatPrice(product.price)}
               </p>
-              <p className="max-w-xl text-base leading-8 text-[rgba(29,29,31,0.68)] sm:text-lg">
+
+              <div className="grid gap-0 border-y border-[var(--color-line)] sm:hidden">
+                {facts.map((fact, index) => (
+                  <article
+                    key={fact.label}
+                    className={`space-y-3 py-4 ${
+                      index < facts.length - 1 ? "border-b border-[var(--color-line)]" : ""
+                    }`}
+                  >
+                    <p className="signal-label">{fact.label}</p>
+                    <p className="text-base font-semibold text-[var(--color-ink)]">
+                      {fact.value}
+                    </p>
+                  </article>
+                ))}
+              </div>
+
+              <p className="max-w-xl text-base leading-8 text-[rgba(29,29,31,0.68)] sm:hidden">
+                {product.shortDescription}
+              </p>
+              <p className="hidden max-w-xl text-base leading-8 text-[rgba(29,29,31,0.68)] sm:text-lg sm:block">
                 {product.description}
               </p>
             </div>
 
-            <div className="grid gap-0 border-y border-[var(--color-line)] sm:grid-cols-3">
-              <article className="space-y-3 border-b border-[var(--color-line)] py-5 sm:border-b-0 sm:border-r sm:pr-5">
-                <p className="signal-label">Category</p>
-                <p className="text-base font-semibold text-[var(--color-ink)]">{product.category}</p>
-              </article>
-              <article className="space-y-3 border-b border-[var(--color-line)] py-5 sm:border-b-0 sm:border-r sm:px-5">
-                <p className="signal-label">Material</p>
-                <p className="text-base font-semibold text-[var(--color-ink)]">{product.material}</p>
-              </article>
-              <article className="space-y-3 py-5 sm:pl-5">
-                <p className="signal-label">In store</p>
-                <p className="text-base font-semibold text-[var(--color-ink)]">{totalStock} pieces</p>
-              </article>
+            <div className="hidden gap-0 border-y border-[var(--color-line)] sm:grid sm:grid-cols-3">
+              {facts.map((fact, index) => (
+                <article
+                  key={fact.label}
+                  className={`space-y-3 py-5 ${
+                    index < facts.length - 1 ? "sm:border-r sm:border-[var(--color-line)]" : ""
+                  } ${index === 0 ? "sm:pr-5" : ""} ${
+                    index === 1 ? "sm:px-5" : ""
+                  } ${index === 2 ? "sm:pl-5" : ""}`}
+                >
+                  <p className="signal-label">{fact.label}</p>
+                  <p className="text-base font-semibold text-[var(--color-ink)]">{fact.value}</p>
+                </article>
+              ))}
             </div>
 
             <div className="rounded-[2rem] border border-[var(--color-line)] bg-[rgba(255,251,246,0.62)] p-5 sm:p-6">
