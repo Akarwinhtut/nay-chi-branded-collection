@@ -802,14 +802,7 @@ async function fetchDatabaseProducts(includeUnpublished = false) {
     throw error;
   }
 
-  const detailRecords = await readCatalogDetailsRecords();
-  const detailMap = new Map(detailRecords.map((record) => [record.id, record]));
-  const products = (data ?? []).map((row) =>
-    applyCatalogDetails(
-      mapRowToCatalogProduct(row as CatalogProductRow),
-      detailMap.get((row as CatalogProductRow).id),
-    ),
-  );
+  const products = (data ?? []).map((row) => mapRowToCatalogProduct(row as CatalogProductRow));
 
   return includeUnpublished
     ? sortCatalogProducts(products)
@@ -831,15 +824,7 @@ export async function createCatalogProduct(input: CatalogProductInput) {
       throwCatalogWriteError("saved", error);
     }
 
-    const nextProduct = mapRowToCatalogProduct(data as CatalogProductRow);
-    const detailRecords = await readCatalogDetailsRecords();
-    const nextDetails = createCatalogDetailsRecord(nextProduct.id, parsed);
-    await writeCatalogDetailsRecords([
-      ...detailRecords.filter((record) => record.id !== nextProduct.id),
-      nextDetails,
-    ]);
-
-    return applyCatalogDetails(nextProduct, nextDetails);
+    return mapRowToCatalogProduct(data as CatalogProductRow);
   }
 
   const records = await readCatalogFileRecords();
@@ -881,15 +866,7 @@ export async function updateCatalogProduct(id: string, input: CatalogProductInpu
       throw new CatalogNotFoundError("The bag could not be found.");
     }
 
-    const nextProduct = mapRowToCatalogProduct(data as CatalogProductRow);
-    const detailRecords = await readCatalogDetailsRecords();
-    const nextDetails = createCatalogDetailsRecord(id, parsed);
-    await writeCatalogDetailsRecords([
-      ...detailRecords.filter((record) => record.id !== id),
-      nextDetails,
-    ]);
-
-    return applyCatalogDetails(nextProduct, nextDetails);
+    return mapRowToCatalogProduct(data as CatalogProductRow);
   }
 
   const records = await readCatalogFileRecords();
@@ -931,9 +908,6 @@ export async function deleteCatalogProduct(id: string) {
     if (!count) {
       throw new CatalogNotFoundError("The bag could not be found.");
     }
-
-    const detailRecords = await readCatalogDetailsRecords();
-    await writeCatalogDetailsRecords(detailRecords.filter((record) => record.id !== id));
 
     return;
   }
