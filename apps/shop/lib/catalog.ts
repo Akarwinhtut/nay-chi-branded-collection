@@ -157,7 +157,7 @@ type CatalogProductRow = {
   collection: string;
   category: string;
   occasion: string;
-  price: number;
+  price: number | string;
   short_description: string;
   description: string;
   material: string;
@@ -388,7 +388,7 @@ function mapRowToCatalogProduct(row: CatalogProductRow): CatalogProduct {
     collection: row.collection,
     category: row.category,
     occasion: row.occasion,
-    price: row.price,
+    price: typeof row.price === "number" ? row.price : Number(row.price),
     shortDescription: row.short_description,
     description: row.description,
     material: row.material,
