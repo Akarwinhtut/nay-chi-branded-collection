@@ -12,6 +12,9 @@ import {
   profile,
 } from "@/lib/site-data";
 
+import { CrossfadePhoto } from "./crossfade-photo";
+import { ProductImage } from "./product-image";
+
 type ProductConfiguratorProps = {
   products: CatalogProduct[];
   anchorId?: string;
@@ -179,12 +182,12 @@ export function ProductConfigurator({
             }`}
           >
             <div className="flex gap-4">
-              <div
-                className="h-[6rem] w-[5rem] shrink-0 rounded-[1.3rem] border border-[rgba(32,24,20,0.08)] bg-cover bg-center shadow-[0_10px_22px_rgba(32,24,20,0.08)]"
-                style={{
-                  backgroundImage: `url(${product.image.src})`,
-                  backgroundPosition: product.image.position ?? "center center",
-                }}
+              <ProductImage
+                src={product.image.src}
+                alt={product.image.alt}
+                position={product.image.position}
+                className="h-[6rem] w-[5rem] shrink-0 rounded-[1.3rem] border border-[rgba(32,24,20,0.08)] shadow-[0_10px_22px_rgba(32,24,20,0.08)]"
+                sizes="80px"
               />
 
               <div className="min-w-0 flex-1">
@@ -369,13 +372,12 @@ export function ProductConfigurator({
       <div className="choice-card rounded-[2rem] p-5 sm:p-6">
         <p className="signal-label">Selected bag</p>
         <div className="mt-4 grid gap-4 md:grid-cols-[7.5rem_1fr] md:items-center">
-          <div
-            className="h-[10rem] rounded-[1.6rem] border border-[rgba(32,24,20,0.08)] bg-cover bg-center shadow-[0_12px_30px_rgba(32,24,20,0.08)]"
-            style={{
-              backgroundImage: `url(${activeVariant?.image.src ?? activeProduct.image.src})`,
-              backgroundPosition:
-                activeVariant?.image.position ?? activeProduct.image.position ?? "center center",
-            }}
+          <ProductImage
+            src={activeVariant?.image.src ?? activeProduct.image.src}
+            alt={activeVariant?.image.alt ?? activeProduct.image.alt}
+            position={activeVariant?.image.position ?? activeProduct.image.position ?? "center center"}
+            className="h-[10rem] rounded-[1.6rem] border border-[rgba(32,24,20,0.08)] shadow-[0_12px_30px_rgba(32,24,20,0.08)]"
+            sizes="120px"
           />
 
           <div className="space-y-3">
@@ -415,12 +417,11 @@ export function ProductConfigurator({
 
   const generalProductPreview = (
     <div className="support-card rounded-[2.2rem] p-4 sm:p-5">
-      <div
-        className="editorial-photo min-h-[24rem] border-[rgba(255,249,241,0.14)] shadow-[0_24px_56px_rgba(32,24,20,0.18)] sm:min-h-[32rem]"
-        style={{
-          backgroundImage: activeVariant ? `url(${activeVariant.image.src})` : undefined,
-          backgroundPosition: activeVariant?.image.position ?? "center center",
-        }}
+      <CrossfadePhoto
+        src={activeVariant?.image.src}
+        alt={activeVariant?.image.alt}
+        position={activeVariant?.image.position ?? "center center"}
+        className="min-h-[24rem] rounded-[2rem] border-[rgba(255,249,241,0.14)] shadow-[0_24px_56px_rgba(32,24,20,0.18)] sm:min-h-[32rem]"
       >
         <div className="flex h-full items-end p-5 sm:p-7">
           <div className="max-w-md rounded-[1.6rem] border border-[rgba(255,249,241,0.14)] bg-[rgba(37,29,24,0.52)] p-5 text-[var(--color-surface)] backdrop-blur-md">
@@ -433,7 +434,7 @@ export function ProductConfigurator({
             </p>
           </div>
         </div>
-      </div>
+      </CrossfadePhoto>
 
       <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap gap-2">

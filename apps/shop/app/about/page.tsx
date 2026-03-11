@@ -1,10 +1,10 @@
 import Link from "next/link";
 
 import { PageIntro } from "@/components/page-intro";
+import { ProductImage } from "@/components/product-image";
 import { ScrollReveal } from "@/components/scroll-reveal";
-import { getPublicCatalogProducts } from "@/lib/catalog";
 import { buildMetadata } from "@/lib/metadata";
-import { contactMethods, profile, visitDetails } from "@/lib/site-data";
+import { contactMethods, profile, storePhoto, visitDetails } from "@/lib/site-data";
 
 export const metadata = buildMetadata({
   title: "Store",
@@ -13,9 +13,7 @@ export const metadata = buildMetadata({
   pathname: "/about",
 });
 
-export default async function StoryPage() {
-  const products = await getPublicCatalogProducts();
-  const imageProduct = products[0];
+export default function StoryPage() {
   const contactLinks = contactMethods.filter((contact) => contact.label !== "Map");
 
   return (
@@ -32,19 +30,20 @@ export default async function StoryPage() {
       />
 
       <section className="grid gap-10 lg:grid-cols-[0.44fr_0.56fr] lg:items-start">
-        <ScrollReveal direction="right">
+        <ScrollReveal direction="right" editorial>
           <div className="rounded-[2.5rem] border border-[var(--color-line)] bg-[linear-gradient(180deg,rgba(255,253,249,0.82),rgba(246,238,228,0.94))] p-4 shadow-[0_24px_56px_rgba(53,38,24,0.05)] sm:p-5">
-            <div
-              className="editorial-photo min-h-[28rem] sm:min-h-[36rem] lg:min-h-[42rem]"
-              style={{
-                backgroundImage: imageProduct ? `url(${imageProduct.image.src})` : undefined,
-                backgroundPosition: imageProduct?.image.position ?? "center center",
-              }}
+            <ProductImage
+              src={storePhoto.src}
+              alt={storePhoto.alt}
+              position={storePhoto.position}
+              className="min-h-[28rem] sm:min-h-[36rem] lg:min-h-[42rem]"
+              sizes="(max-width: 1024px) 100vw, 44vw"
+              priority
             />
           </div>
         </ScrollReveal>
 
-        <ScrollReveal className="space-y-8" direction="left" soft>
+        <ScrollReveal className="space-y-8" direction="left" soft editorial>
           <div className="grid gap-0 border-y border-[var(--color-line)]">
             {visitDetails.slice(0, 4).map((detail) => (
               <article

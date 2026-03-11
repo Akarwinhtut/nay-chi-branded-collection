@@ -14,6 +14,7 @@ type PageIntroProps = {
   stats?: PageIntroStat[];
   className?: string;
   centered?: boolean;
+  titleClassName?: string;
 };
 
 export function PageIntro({
@@ -25,6 +26,7 @@ export function PageIntro({
   stats,
   className,
   centered = false,
+  titleClassName,
 }: PageIntroProps) {
   return (
     <section
@@ -58,7 +60,14 @@ export function PageIntro({
       </div>
 
       <div className="space-y-6">
-        <h1 className="font-display text-[4rem] font-medium leading-[0.88] tracking-[-0.045em] text-[var(--color-ink)] sm:text-[5.6rem] lg:text-[6.8rem]">
+        <h1
+          className={[
+            "font-display text-[4rem] font-medium leading-[0.88] tracking-[-0.045em] text-[var(--color-ink)] sm:text-[5.6rem] lg:text-[6.8rem]",
+            titleClassName ?? "",
+          ]
+            .filter(Boolean)
+            .join(" ")}
+        >
           {title}
         </h1>
         <p className="max-w-2xl text-base leading-8 text-[rgba(29,29,31,0.64)] sm:text-lg">

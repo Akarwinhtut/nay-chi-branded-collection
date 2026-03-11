@@ -2,17 +2,23 @@
 
 import { useState } from "react";
 
-import type { CatalogProduct } from "@/lib/catalog";
+import type { CatalogProduct } from "@/lib/catalog-shared";
 
 import { ProductTile } from "./product-tile";
 
 type CollectionCatalogProps = {
   products: CatalogProduct[];
+  initialCategory?: string;
 };
 
-export function CollectionCatalog({ products }: CollectionCatalogProps) {
-  const [activeCategory, setActiveCategory] = useState("All");
+export function CollectionCatalog({
+  products,
+  initialCategory = "All",
+}: CollectionCatalogProps) {
   const categories = Array.from(new Set(products.map((product) => product.category)));
+  const [activeCategory, setActiveCategory] = useState(
+    categories.includes(initialCategory) ? initialCategory : "All",
+  );
 
   const filteredProducts = products.filter((product) => {
     return activeCategory === "All" || product.category === activeCategory;

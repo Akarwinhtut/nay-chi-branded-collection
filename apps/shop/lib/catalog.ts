@@ -5,7 +5,9 @@ import path from "node:path";
 import { unstable_noStore as noStore } from "next/cache";
 import { z } from "zod";
 
-import type { ImageAsset, Product } from "@/lib/site-data";
+import { sortCatalogProducts } from "@/lib/catalog-shared";
+import type { CatalogProduct } from "@/lib/catalog-shared";
+import type { ImageAsset } from "@/lib/site-data";
 import { products as seededProducts } from "@/lib/site-data";
 import {
   createSupabaseAdminClient,
@@ -14,6 +16,7 @@ import {
 
 const dataDirectoryPath = path.join(process.cwd(), "data");
 const catalogFilePath = path.join(dataDirectoryPath, "catalog-products.json");
+const catalogDetailsFilePath = path.join(dataDirectoryPath, "catalog-product-details.json");
 const fileSeedTimestamp = "2026-03-10T00:00:00.000Z";
 const duplicateSlugMessage = "That slug already exists. Change the slug and save again.";
 
@@ -36,6 +39,14 @@ const optionalImageSourceSchema = z
     (value) => value === "" || isValidImageSource(value),
     "Use a full image URL or a site path like /products/david-jones/bag.jpg.",
   );
+
+const inventoryStatusSchema = z.enum(["in_stock", "low_stock", "sold_out"]);
+
+const galleryImageSchema = z.object({
+  src: imageSourceSchema,
+  alt: z.string().trim().min(4, "Add image alt text.").max(180),
+  position: z.string().trim().max(80).optional().or(z.literal("")),
+});
 
 const productSizeSchema = z.object({
   label: z.string().trim().min(1, "Add a size label.").max(40),
@@ -75,12 +86,39 @@ export const catalogProductInputSchema = z.object({
   imageSrc: imageSourceSchema,
   imageAlt: z.string().trim().min(4, "Add image alt text.").max(180),
   imagePosition: z.string().trim().max(80).optional().or(z.literal("")),
+  salePrice: z.number().min(0, "Sale price cannot be negative.").max(999999999).nullable().default(null),
+  tags: z.array(z.string().trim().min(1).max(40)).max(12).default([]),
+  galleryImages: z.array(galleryImageSchema).max(8, "Add up to 8 gallery images.").default([]),
+  dimensions: z.string().trim().max(160).default(""),
+  strapLength: z.string().trim().max(160).default(""),
+  hardwareFinish: z.string().trim().max(120).default(""),
+  inventoryThreshold: z.coerce.number().int().min(1).max(999).default(2),
+  inventoryStatusOverride: inventoryStatusSchema.nullable().default(null),
+  isTrending: z.boolean().default(false),
+  isArchived: z.boolean().default(false),
   isFeatured: z.boolean(),
   isNewArrival: z.boolean(),
   isPublished: z.boolean(),
   displayOrder: z.coerce.number().int().min(0).max(9999),
   variants: z.array(productVariantSchema).min(1, "Add at least one colorway."),
-});
+}).refine(
+  (input) => input.salePrice === null || input.salePrice < input.price,
+  {
+    path: ["salePrice"],
+    message: "Sale price should be below the regular price.",
+  },
+);
+
+export const catalogAttributeUpdateSchema = z
+  .object({
+    kind: z.enum(["collection", "color", "size"]),
+    from: z.string().trim().min(1, "Choose the current label."),
+    to: z.string().trim().min(1, "Add the replacement label."),
+  })
+  .refine((input) => input.from.toLowerCase() !== input.to.toLowerCase(), {
+    path: ["to"],
+    message: "Choose a different replacement label.",
+  });
 
 const fileCatalogRecordSchema = catalogProductInputSchema.extend({
   id: z.string().trim().min(1),
@@ -91,18 +129,26 @@ const fileCatalogRecordSchema = catalogProductInputSchema.extend({
 const fileCatalogArraySchema = z.array(fileCatalogRecordSchema);
 
 export type CatalogProductInput = z.infer<typeof catalogProductInputSchema>;
-export type CatalogStorageMode = "database" | "file" | "seed";
-
-export type CatalogProduct = Product & {
-  id: string;
-  createdAt?: string;
-  updatedAt?: string;
-  isFeatured: boolean;
-  isNewArrival: boolean;
-  isPublished: boolean;
-  displayOrder: number;
-  source: CatalogStorageMode;
-};
+export type CatalogAttributeUpdateInput = z.infer<typeof catalogAttributeUpdateSchema>;
+export type {
+  CatalogProduct,
+  CatalogRecommendation,
+  CatalogStorageMode,
+} from "@/lib/catalog-shared";
+export {
+  getCatalogCategories,
+  getCatalogProductCompareAtPrice,
+  getCatalogProductDisplayPrice,
+  getCatalogProductInventory,
+  getCatalogSearchText,
+  getCatalogTotalColorways,
+  getCatalogTotalInventory,
+  getFeaturedCatalogProducts,
+  getLatestCatalogProducts,
+  getRecommendedCatalogSelections,
+  getRecommendedCatalogProducts,
+  getTrendingCatalogProducts,
+} from "@/lib/catalog-shared";
 
 type CatalogProductRow = {
   id: string;
@@ -129,7 +175,25 @@ type CatalogProductRow = {
   updated_at: string;
 };
 
+const catalogProductDetailsSchema = z.object({
+  id: z.string().trim().min(1),
+  salePrice: z.number().min(0).max(999999999).nullable().default(null),
+  tags: z.array(z.string().trim().min(1).max(40)).max(12).default([]),
+  galleryImages: z.array(galleryImageSchema).max(8).default([]),
+  dimensions: z.string().trim().max(160).default(""),
+  strapLength: z.string().trim().max(160).default(""),
+  hardwareFinish: z.string().trim().max(120).default(""),
+  inventoryThreshold: z.number().int().min(1).max(999).default(2),
+  inventoryStatusOverride: inventoryStatusSchema.nullable().default(null),
+  isTrending: z.boolean().default(false),
+  isArchived: z.boolean().default(false),
+  updatedAt: z.string().trim().min(1).optional(),
+});
+
+const catalogProductDetailsArraySchema = z.array(catalogProductDetailsSchema);
+
 type FileCatalogRecord = z.infer<typeof fileCatalogRecordSchema>;
+type CatalogProductDetailsRecord = z.infer<typeof catalogProductDetailsSchema>;
 
 export class CatalogConflictError extends Error {}
 
@@ -161,6 +225,89 @@ function normalizeBadges(badges: string[]) {
     .map((badge) => badge.trim())
     .filter(Boolean)
     .slice(0, 8);
+}
+
+function normalizeGalleryImages(
+  galleryImages: CatalogProductInput["galleryImages"],
+): ImageAsset[] {
+  return galleryImages.map((image) =>
+    buildImageAsset({
+      src: image.src,
+      alt: image.alt,
+      position: image.position,
+    }),
+  );
+}
+
+function applyCatalogDetails(
+  product: CatalogProduct,
+  details?: Partial<CatalogProductDetailsRecord> | null,
+): CatalogProduct {
+  if (!details) {
+    return {
+      ...product,
+      salePrice: product.salePrice ?? null,
+      tags: product.tags ?? [],
+      galleryImages: product.galleryImages ?? [],
+      dimensions: product.dimensions ?? "",
+      strapLength: product.strapLength ?? "",
+      hardwareFinish: product.hardwareFinish ?? "",
+      inventoryThreshold: product.inventoryThreshold ?? 2,
+      inventoryStatusOverride: product.inventoryStatusOverride ?? null,
+      isTrending: product.isTrending ?? false,
+      isArchived: product.isArchived ?? false,
+    };
+  }
+
+  const parsedDetails = catalogProductDetailsSchema.parse({
+    id: details.id ?? product.id,
+    salePrice: details.salePrice ?? product.salePrice ?? null,
+    tags: details.tags ?? product.tags ?? [],
+    galleryImages: details.galleryImages ?? product.galleryImages ?? [],
+    dimensions: details.dimensions ?? product.dimensions ?? "",
+    strapLength: details.strapLength ?? product.strapLength ?? "",
+    hardwareFinish: details.hardwareFinish ?? product.hardwareFinish ?? "",
+    inventoryThreshold: details.inventoryThreshold ?? product.inventoryThreshold ?? 2,
+    inventoryStatusOverride:
+      details.inventoryStatusOverride ?? product.inventoryStatusOverride ?? null,
+    isTrending: details.isTrending ?? product.isTrending ?? false,
+    isArchived: details.isArchived ?? product.isArchived ?? false,
+    updatedAt: details.updatedAt,
+  });
+
+  return {
+    ...product,
+    salePrice: parsedDetails.salePrice,
+    tags: parsedDetails.tags,
+    galleryImages: normalizeGalleryImages(parsedDetails.galleryImages),
+    dimensions: parsedDetails.dimensions,
+    strapLength: parsedDetails.strapLength,
+    hardwareFinish: parsedDetails.hardwareFinish,
+    inventoryThreshold: parsedDetails.inventoryThreshold,
+    inventoryStatusOverride: parsedDetails.inventoryStatusOverride,
+    isTrending: parsedDetails.isTrending,
+    isArchived: parsedDetails.isArchived,
+  };
+}
+
+function createCatalogDetailsRecord(
+  id: string,
+  input: CatalogProductInput,
+): CatalogProductDetailsRecord {
+  return catalogProductDetailsSchema.parse({
+    id,
+    salePrice: input.salePrice,
+    tags: input.tags,
+    galleryImages: input.galleryImages,
+    dimensions: input.dimensions,
+    strapLength: input.strapLength,
+    hardwareFinish: input.hardwareFinish,
+    inventoryThreshold: input.inventoryThreshold,
+    inventoryStatusOverride: input.inventoryStatusOverride,
+    isTrending: input.isTrending,
+    isArchived: input.isArchived,
+    updatedAt: new Date().toISOString(),
+  });
 }
 
 function normalizeVariants(
@@ -257,7 +404,7 @@ function mapRowToCatalogProduct(row: CatalogProductRow): CatalogProduct {
     variants: normalizedVariants,
   });
 
-  return {
+  const baseProduct: CatalogProduct = {
     id: row.id,
     slug: parsed.slug,
     name: parsed.name,
@@ -280,6 +427,20 @@ function mapRowToCatalogProduct(row: CatalogProductRow): CatalogProduct {
     displayOrder: parsed.displayOrder,
     source: "database",
   };
+
+  return applyCatalogDetails(baseProduct, {
+    id: row.id,
+    salePrice: parsed.salePrice,
+    tags: parsed.tags,
+    galleryImages: parsed.galleryImages,
+    dimensions: parsed.dimensions,
+    strapLength: parsed.strapLength,
+    hardwareFinish: parsed.hardwareFinish,
+    inventoryThreshold: parsed.inventoryThreshold,
+    inventoryStatusOverride: parsed.inventoryStatusOverride,
+    isTrending: parsed.isTrending,
+    isArchived: parsed.isArchived,
+  });
 }
 
 function mapFileRecordToCatalogProduct(record: FileCatalogRecord): CatalogProduct {
@@ -290,7 +451,7 @@ function mapFileRecordToCatalogProduct(record: FileCatalogRecord): CatalogProduc
     position: parsed.imagePosition,
   });
 
-  return {
+  const baseProduct: CatalogProduct = {
     id: record.id,
     slug: parsed.slug,
     name: parsed.name,
@@ -313,19 +474,19 @@ function mapFileRecordToCatalogProduct(record: FileCatalogRecord): CatalogProduc
     displayOrder: parsed.displayOrder,
     source: "file",
   };
-}
 
-export function sortCatalogProducts(products: CatalogProduct[]) {
-  return [...products].sort((left, right) => {
-    if (left.displayOrder !== right.displayOrder) {
-      return left.displayOrder - right.displayOrder;
-    }
-
-    if (left.isFeatured !== right.isFeatured) {
-      return left.isFeatured ? -1 : 1;
-    }
-
-    return left.name.localeCompare(right.name);
+  return applyCatalogDetails(baseProduct, {
+    id: record.id,
+    salePrice: parsed.salePrice,
+    tags: parsed.tags,
+    galleryImages: parsed.galleryImages,
+    dimensions: parsed.dimensions,
+    strapLength: parsed.strapLength,
+    hardwareFinish: parsed.hardwareFinish,
+    inventoryThreshold: parsed.inventoryThreshold,
+    inventoryStatusOverride: parsed.inventoryStatusOverride,
+    isTrending: parsed.isTrending,
+    isArchived: parsed.isArchived,
   });
 }
 
@@ -337,16 +498,6 @@ function sortFileCatalogRecords(records: FileCatalogRecord[]) {
 
     return left.name.localeCompare(right.name);
   });
-}
-
-function selectFeatured(products: CatalogProduct[]) {
-  const featured = products.filter((product) => product.isFeatured);
-
-  if (featured.length > 0) {
-    return sortCatalogProducts(featured).slice(0, 3);
-  }
-
-  return sortCatalogProducts(products).slice(0, 3);
 }
 
 function isMissingFileError(error: unknown): error is NodeJS.ErrnoException {
@@ -363,6 +514,15 @@ async function writeCatalogFileRecords(records: FileCatalogRecord[]) {
   await writeFile(
     catalogFilePath,
     `${JSON.stringify(sortFileCatalogRecords(records), null, 2)}\n`,
+    "utf8",
+  );
+}
+
+async function writeCatalogDetailsRecords(records: CatalogProductDetailsRecord[]) {
+  await mkdir(dataDirectoryPath, { recursive: true });
+  await writeFile(
+    catalogDetailsFilePath,
+    `${JSON.stringify(records, null, 2)}\n`,
     "utf8",
   );
 }
@@ -395,13 +555,33 @@ async function readCatalogFileRecords() {
   }
 }
 
+async function readCatalogDetailsRecords() {
+  await mkdir(dataDirectoryPath, { recursive: true });
+
+  try {
+    const contents = await readFile(catalogDetailsFilePath, "utf8");
+    const rawRecords = contents.trim().length > 0 ? JSON.parse(contents) : [];
+
+    return catalogProductDetailsArraySchema.parse(rawRecords);
+  } catch (error) {
+    if (isMissingFileError(error)) {
+      await writeCatalogDetailsRecords([]);
+      return [];
+    }
+
+    throw error;
+  }
+}
+
 async function fetchFileProducts(includeUnpublished = false) {
   const records = await readCatalogFileRecords();
   const products = records.map((record) => mapFileRecordToCatalogProduct(record));
 
   return includeUnpublished
     ? sortCatalogProducts(products)
-    : sortCatalogProducts(products.filter((product) => product.isPublished));
+    : sortCatalogProducts(
+        products.filter((product) => product.isPublished && !product.isArchived),
+      );
 }
 
 function throwCatalogWriteError(
@@ -420,41 +600,6 @@ function throwCatalogWriteError(
   throw new Error(`The bag could not be ${action} right now.`);
 }
 
-export function getFeaturedCatalogProducts(products: CatalogProduct[]) {
-  return selectFeatured(products);
-}
-
-export function getLatestCatalogProducts(products: CatalogProduct[]) {
-  const latest = products.filter((product) => product.isNewArrival);
-
-  if (latest.length > 0) {
-    return sortCatalogProducts(latest).slice(0, 3);
-  }
-
-  return sortCatalogProducts(products).slice(-3).reverse();
-}
-
-export function getCatalogTotalColorways(products: CatalogProduct[]) {
-  return products.reduce((sum, product) => sum + product.variants.length, 0);
-}
-
-export function getCatalogTotalInventory(products: CatalogProduct[]) {
-  return products.reduce(
-    (sum, product) =>
-      sum +
-      product.variants.reduce(
-        (variantSum, variant) =>
-          variantSum + variant.sizes.reduce((sizeSum, size) => sizeSum + size.stock, 0),
-        0,
-      ),
-    0,
-  );
-}
-
-export function getCatalogCategories(products: CatalogProduct[]) {
-  return Array.from(new Set(products.map((product) => product.category)));
-}
-
 export function createEmptyCatalogProductInput(): CatalogProductInput {
   return {
     slug: "",
@@ -463,14 +608,24 @@ export function createEmptyCatalogProductInput(): CatalogProductInput {
     category: "",
     occasion: "",
     price: 0,
+    salePrice: null,
     shortDescription: "",
     description: "",
     material: "",
     detail: "",
     badges: [],
+    tags: [],
     imageSrc: "",
     imageAlt: "",
     imagePosition: "center center",
+    galleryImages: [],
+    dimensions: "",
+    strapLength: "",
+    hardwareFinish: "",
+    inventoryThreshold: 2,
+    inventoryStatusOverride: null,
+    isTrending: false,
+    isArchived: false,
     isFeatured: false,
     isNewArrival: false,
     isPublished: true,
@@ -497,14 +652,28 @@ export function createCatalogInputFromProduct(product: CatalogProduct): CatalogP
     category: product.category,
     occasion: product.occasion,
     price: product.price,
+    salePrice: product.salePrice ?? null,
     shortDescription: product.shortDescription,
     description: product.description,
     material: product.material,
     detail: product.detail,
     badges: [...product.badges],
+    tags: [...(product.tags ?? [])],
     imageSrc: product.image.src,
     imageAlt: product.image.alt,
     imagePosition: product.image.position ?? "center center",
+    galleryImages: (product.galleryImages ?? []).map((image) => ({
+      src: image.src,
+      alt: image.alt,
+      position: image.position ?? "center center",
+    })),
+    dimensions: product.dimensions ?? "",
+    strapLength: product.strapLength ?? "",
+    hardwareFinish: product.hardwareFinish ?? "",
+    inventoryThreshold: product.inventoryThreshold ?? 2,
+    inventoryStatusOverride: product.inventoryStatusOverride ?? null,
+    isTrending: product.isTrending ?? false,
+    isArchived: product.isArchived ?? false,
     isFeatured: product.isFeatured,
     isNewArrival: product.isNewArrival,
     isPublished: product.isPublished,
@@ -570,6 +739,61 @@ export function mapCatalogInputToInsert(input: CatalogProductInput) {
   };
 }
 
+async function getEditableCatalogProducts() {
+  if (hasSupabaseAdminConfig()) {
+    try {
+      return await fetchDatabaseProducts(true);
+    } catch {}
+  }
+
+  return fetchFileProducts(true);
+}
+
+export async function renameCatalogAttributeValues(input: CatalogAttributeUpdateInput) {
+  const parsed = catalogAttributeUpdateSchema.parse(input);
+  const products = await getEditableCatalogProducts();
+  const matchedProducts = products.filter((product) => {
+    if (parsed.kind === "collection") {
+      return product.collection === parsed.from;
+    }
+
+    if (parsed.kind === "color") {
+      return product.variants.some((variant) => variant.color === parsed.from);
+    }
+
+    return product.variants.some((variant) =>
+      variant.sizes.some((size) => size.label === parsed.from),
+    );
+  });
+
+  for (const product of matchedProducts) {
+    const nextInput = createCatalogInputFromProduct(product);
+
+    if (parsed.kind === "collection") {
+      nextInput.collection = parsed.to;
+    } else if (parsed.kind === "color") {
+      nextInput.variants = nextInput.variants.map((variant) => ({
+        ...variant,
+        color: variant.color === parsed.from ? parsed.to : variant.color,
+      }));
+    } else {
+      nextInput.variants = nextInput.variants.map((variant) => ({
+        ...variant,
+        sizes: variant.sizes.map((size) => ({
+          ...size,
+          label: size.label === parsed.from ? parsed.to : size.label,
+        })),
+      }));
+    }
+
+    await updateCatalogProduct(product.id, nextInput);
+  }
+
+  return {
+    count: matchedProducts.length,
+  };
+}
+
 async function fetchDatabaseProducts(includeUnpublished = false) {
   const supabase = createSupabaseAdminClient();
   let query = supabase
@@ -588,7 +812,18 @@ async function fetchDatabaseProducts(includeUnpublished = false) {
     throw error;
   }
 
-  return (data ?? []).map((row) => mapRowToCatalogProduct(row as CatalogProductRow));
+  const detailRecords = await readCatalogDetailsRecords();
+  const detailMap = new Map(detailRecords.map((record) => [record.id, record]));
+  const products = (data ?? []).map((row) =>
+    applyCatalogDetails(
+      mapRowToCatalogProduct(row as CatalogProductRow),
+      detailMap.get((row as CatalogProductRow).id),
+    ),
+  );
+
+  return includeUnpublished
+    ? sortCatalogProducts(products)
+    : sortCatalogProducts(products.filter((product) => !product.isArchived));
 }
 
 export async function createCatalogProduct(input: CatalogProductInput) {
@@ -606,7 +841,15 @@ export async function createCatalogProduct(input: CatalogProductInput) {
       throwCatalogWriteError("saved", error);
     }
 
-    return mapRowToCatalogProduct(data as CatalogProductRow);
+    const nextProduct = mapRowToCatalogProduct(data as CatalogProductRow);
+    const detailRecords = await readCatalogDetailsRecords();
+    const nextDetails = createCatalogDetailsRecord(nextProduct.id, parsed);
+    await writeCatalogDetailsRecords([
+      ...detailRecords.filter((record) => record.id !== nextProduct.id),
+      nextDetails,
+    ]);
+
+    return applyCatalogDetails(nextProduct, nextDetails);
   }
 
   const records = await readCatalogFileRecords();
@@ -648,7 +891,15 @@ export async function updateCatalogProduct(id: string, input: CatalogProductInpu
       throw new CatalogNotFoundError("The bag could not be found.");
     }
 
-    return mapRowToCatalogProduct(data as CatalogProductRow);
+    const nextProduct = mapRowToCatalogProduct(data as CatalogProductRow);
+    const detailRecords = await readCatalogDetailsRecords();
+    const nextDetails = createCatalogDetailsRecord(id, parsed);
+    await writeCatalogDetailsRecords([
+      ...detailRecords.filter((record) => record.id !== id),
+      nextDetails,
+    ]);
+
+    return applyCatalogDetails(nextProduct, nextDetails);
   }
 
   const records = await readCatalogFileRecords();
@@ -690,6 +941,9 @@ export async function deleteCatalogProduct(id: string) {
     if (!count) {
       throw new CatalogNotFoundError("The bag could not be found.");
     }
+
+    const detailRecords = await readCatalogDetailsRecords();
+    await writeCatalogDetailsRecords(detailRecords.filter((record) => record.id !== id));
 
     return;
   }

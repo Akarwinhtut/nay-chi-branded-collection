@@ -4,9 +4,21 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
-import { navigation, profile } from "@/lib/site-data";
+import { profile } from "@/lib/site-data";
 
-const mobileLinks = [...navigation, { label: "Contact", href: "/contact" }, { label: "Policies", href: "/policies" }];
+const primaryLinks = [
+  { label: "New in", href: "/#new-arrivals" },
+  { label: "Store", href: "/about" },
+  { label: "Contact", href: "/contact" },
+];
+
+const mobileLinks = [
+  { label: "New arrivals", href: "/#new-arrivals" },
+  { label: "Bags", href: "/services" },
+  { label: "Store", href: "/about" },
+  { label: "Contact", href: "/contact" },
+  { label: "Policies", href: "/policies" },
+];
 
 export function SiteHeader() {
   const pathname = usePathname();
@@ -24,6 +36,10 @@ export function SiteHeader() {
   function isActive(href: string) {
     if (href === "/") {
       return pathname === href;
+    }
+
+    if (href.startsWith("/#")) {
+      return pathname === "/";
     }
 
     return pathname.startsWith(href);
@@ -51,7 +67,7 @@ export function SiteHeader() {
           <div className="flex items-center gap-2 md:hidden">
             <Link
               href="/services"
-              className="inline-flex min-h-[2.9rem] items-center justify-center rounded-full border border-[var(--color-line)] bg-[rgba(255,255,255,0.78)] px-4 text-sm font-semibold text-[var(--color-ink)]"
+              className="inline-flex min-h-[2.9rem] items-center justify-center rounded-full border border-[var(--color-line)] bg-[rgba(255,255,255,0.88)] px-4 text-sm font-semibold text-[var(--color-ink)] shadow-[0_12px_28px_rgba(53,38,24,0.05)]"
             >
               Bags
             </Link>
@@ -66,40 +82,63 @@ export function SiteHeader() {
             </button>
           </div>
 
-          <nav className="hidden items-center gap-2 md:flex">
-            {navigation.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`inline-flex min-h-[2.9rem] items-center rounded-full px-4 text-sm font-semibold transition-[background-color,color,box-shadow] duration-200 ${
-                  isActive(item.href)
-                    ? "bg-[rgba(255,255,255,0.84)] text-[var(--color-ink)] shadow-[0_12px_28px_rgba(53,38,24,0.05)]"
-                    : "text-[rgba(29,29,31,0.58)] hover:bg-[rgba(255,255,255,0.64)] hover:text-[var(--color-ink)]"
-                }`}
-              >
-                {item.label}
-              </Link>
-            ))}
-          </nav>
+          <div className="hidden items-center gap-2 md:flex">
+            <nav className="flex items-center gap-2">
+              {primaryLinks.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`inline-flex min-h-[2.9rem] items-center rounded-full px-4 text-sm font-semibold transition-[background-color,color,box-shadow] duration-200 ${
+                    isActive(item.href)
+                      ? "bg-[rgba(255,255,255,0.84)] text-[var(--color-ink)] shadow-[0_12px_28px_rgba(53,38,24,0.05)]"
+                      : "text-[rgba(29,29,31,0.58)] hover:bg-[rgba(255,255,255,0.64)] hover:text-[var(--color-ink)]"
+                  }`}
+                >
+                  {item.label}
+                </Link>
+              ))}
+            </nav>
+
+            <Link
+              href="/services"
+              className={`inline-flex min-h-[2.9rem] items-center justify-center rounded-full border px-5 text-sm font-semibold text-[var(--color-ink)] whitespace-nowrap transition-[background-color,color,box-shadow,border-color] duration-200 ${
+                pathname.startsWith("/services")
+                  ? "border-[var(--color-line-strong)] bg-white shadow-[0_12px_28px_rgba(53,38,24,0.05)]"
+                  : "border-[var(--color-line)] bg-[rgba(255,255,255,0.86)] shadow-[0_12px_28px_rgba(53,38,24,0.05)] hover:border-[var(--color-line-strong)] hover:bg-white"
+              }`}
+            >
+              Bags
+            </Link>
+          </div>
         </div>
 
         {menuOpen ? (
-          <nav className="mt-4 grid gap-2 border-t border-[var(--color-line)] pt-4 md:hidden">
-            {mobileLinks.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={() => setMenuOpen(false)}
-                className={`menu-link rounded-[1.35rem] border px-4 py-3 text-sm font-semibold ${
-                  isActive(item.href)
-                    ? "border-[var(--color-line-strong)] bg-white text-[var(--color-ink)] shadow-[0_12px_28px_rgba(53,38,24,0.05)]"
-                    : "border-[var(--color-line)] bg-[rgba(255,255,255,0.74)] text-[rgba(29,29,31,0.72)]"
-                }`}
-              >
-                {item.label}
-              </Link>
-            ))}
-          </nav>
+          <div className="mt-4 grid gap-3 border-t border-[var(--color-line)] pt-4 md:hidden">
+            <Link
+              href="/services"
+              onClick={() => setMenuOpen(false)}
+              className="menu-link rounded-[1.35rem] bg-[var(--color-ink)] px-4 py-3 text-sm font-semibold text-white shadow-[0_12px_28px_rgba(53,38,24,0.08)]"
+            >
+              Shop all bags
+            </Link>
+
+            <nav className="grid gap-2">
+              {mobileLinks.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setMenuOpen(false)}
+                  className={`menu-link rounded-[1.35rem] border px-4 py-3 text-sm font-semibold ${
+                    isActive(item.href)
+                      ? "border-[var(--color-line-strong)] bg-white text-[var(--color-ink)] shadow-[0_12px_28px_rgba(53,38,24,0.05)]"
+                      : "border-[var(--color-line)] bg-[rgba(255,255,255,0.74)] text-[rgba(29,29,31,0.72)]"
+                  }`}
+                >
+                  {item.label}
+                </Link>
+              ))}
+            </nav>
+          </div>
         ) : null}
       </div>
     </header>

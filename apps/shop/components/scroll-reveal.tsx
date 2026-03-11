@@ -12,6 +12,7 @@ type ScrollRevealProps = {
   once?: boolean;
   threshold?: number;
   soft?: boolean;
+  editorial?: boolean;
 };
 
 export function ScrollReveal({
@@ -23,11 +24,16 @@ export function ScrollReveal({
   once = true,
   threshold = 0.25,
   soft = false,
+  editorial = false,
 }: ScrollRevealProps) {
   const [visible, setVisible] = useState(false);
   const ref = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
+    if (!editorial) {
+      return;
+    }
+
     const node = ref.current;
 
     if (!node) {
@@ -91,7 +97,7 @@ export function ScrollReveal({
       delete node.dataset.ready;
       observer.disconnect();
     };
-  }, [once, threshold]);
+  }, [editorial, once, threshold]);
 
   const style = {
     "--reveal-delay": `${delayMs}ms`,
@@ -104,9 +110,9 @@ export function ScrollReveal({
       data-direction={direction}
       style={style}
       className={[
-        "scroll-reveal",
-        soft ? "scroll-reveal--soft" : "",
-        visible ? "scroll-reveal--visible" : "",
+        editorial ? "scroll-reveal" : "",
+        editorial && soft ? "scroll-reveal--soft" : "",
+        editorial && visible ? "scroll-reveal--visible" : "",
         className ?? "",
       ]
         .filter(Boolean)

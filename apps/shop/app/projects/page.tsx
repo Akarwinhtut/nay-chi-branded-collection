@@ -27,7 +27,7 @@ export default async function LookbookPage() {
   return (
     <div className="mx-auto flex max-w-7xl flex-col gap-20 lg:gap-24">
       <section className="grid gap-10 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
-        <ScrollReveal className="space-y-6" soft>
+        <ScrollReveal className="space-y-6" soft editorial>
           <SectionHeading
             eyebrow="Gallery"
             title="A quieter photo journal for the collection."
@@ -35,7 +35,7 @@ export default async function LookbookPage() {
           />
         </ScrollReveal>
 
-        <ScrollReveal direction="left">
+        <ScrollReveal direction="left" editorial>
           <div className="surface-panel rounded-[2.2rem] p-6 sm:p-8">
             <div className="grid gap-4 sm:grid-cols-3">
               {["Pairing", "Contrast", "Lighter tones"].map((item, index) => (
@@ -52,7 +52,7 @@ export default async function LookbookPage() {
       </section>
 
       <section className="space-y-8">
-        <ScrollReveal soft>
+        <ScrollReveal soft editorial>
           <SectionHeading
             eyebrow="Photo stories"
             title="Three ways to read the collection."
@@ -75,6 +75,7 @@ export default async function LookbookPage() {
                 key={story.title}
                 delayMs={index * 90}
                 direction={index % 2 === 0 ? "right" : "left"}
+                editorial
               >
                 <article
                   className={`grid gap-8 lg:grid-cols-[1fr_1fr] lg:items-center ${

@@ -81,6 +81,16 @@ export type Product = {
   badges: string[];
   image: ImageAsset;
   variants: ProductVariant[];
+  salePrice?: number | null;
+  tags?: string[];
+  galleryImages?: ImageAsset[];
+  dimensions?: string;
+  strapLength?: string;
+  hardwareFinish?: string;
+  inventoryThreshold?: number;
+  inventoryStatusOverride?: "in_stock" | "low_stock" | "sold_out" | null;
+  isTrending?: boolean;
+  isArchived?: boolean;
 };
 
 export type CraftPillar = {
@@ -201,6 +211,12 @@ export const contactMethods: ContactMethod[] = [
     note: "Use the map for store visits, pickup, or location confirmation.",
   },
 ];
+
+export const storePhoto: ImageAsset = {
+  src: "/store/google-maps-store-photo.jpg",
+  alt: "Interior of Nay Chi Branded Collection in Yangon, with illuminated wall shelving and handbag displays.",
+  position: "center center",
+};
 
 export const products: Product[] = [
   {
