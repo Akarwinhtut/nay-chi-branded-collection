@@ -630,17 +630,7 @@ export function createEmptyCatalogProductInput(): CatalogProductInput {
     isNewArrival: false,
     isPublished: true,
     displayOrder: 100,
-    variants: [
-      {
-        color: "",
-        swatch: "#c9b39b",
-        finish: "",
-        imageSrc: "",
-        imageAlt: "",
-        imagePosition: "center center",
-        sizes: [{ label: "Standard", stock: 1 }],
-      },
-    ],
+    variants: [],
   };
 }
 

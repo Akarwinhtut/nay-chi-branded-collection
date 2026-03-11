@@ -595,7 +595,7 @@ export const shoppingNotes: ShoppingNote[] = [
   },
   {
     title: "Order with a message",
-    description: "Send one short Telegram or email message to the shop.",
+    description: "Open Telegram or email directly, or share the order note into Viber and other chat apps.",
   },
 ];
 

@@ -7,15 +7,14 @@ import { useEffect, useState } from "react";
 import { profile } from "@/lib/site-data";
 
 const primaryLinks = [
-  { label: "New in", href: "/#new-arrivals" },
-  { label: "Store", href: "/about" },
+  { label: "New In", href: "/#new-arrivals" },
+  { label: "Visit", href: "/about" },
   { label: "Contact", href: "/contact" },
 ];
 
 const mobileLinks = [
-  { label: "New arrivals", href: "/#new-arrivals" },
-  { label: "Bags", href: "/services" },
-  { label: "Store", href: "/about" },
+  { label: "New In", href: "/#new-arrivals" },
+  { label: "Visit", href: "/about" },
   { label: "Contact", href: "/contact" },
   { label: "Policies", href: "/policies" },
 ];
@@ -59,8 +58,8 @@ export function SiteHeader() {
             <span className="block truncate text-[1.1rem] font-semibold tracking-[-0.045em] text-[var(--color-ink)] sm:text-[1.28rem]">
               {profile.name}
             </span>
-            <span className="mt-1 block text-[11px] tracking-[0.06em] text-[rgba(94,67,39,0.54)]">
-              Branded bags in Yangon
+            <span className="mt-1 block text-[10px] uppercase tracking-[0.16em] text-[rgba(94,67,39,0.54)]">
+              Curated bags in Yangon
             </span>
           </Link>
 
@@ -69,7 +68,7 @@ export function SiteHeader() {
               href="/services"
               className="inline-flex min-h-[2.9rem] items-center justify-center rounded-full border border-[var(--color-line)] bg-[rgba(255,255,255,0.88)] px-4 text-sm font-semibold text-[var(--color-ink)] shadow-[0_12px_28px_rgba(53,38,24,0.05)]"
             >
-              Bags
+              Collection
             </Link>
             <button
               type="button"
@@ -88,7 +87,7 @@ export function SiteHeader() {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`inline-flex min-h-[2.9rem] items-center rounded-full px-4 text-sm font-semibold transition-[background-color,color,box-shadow] duration-200 ${
+                  className={`inline-flex min-h-[2.9rem] items-center rounded-full px-4 text-[13px] font-medium tracking-[0.02em] transition-[background-color,color,box-shadow] duration-200 ${
                     isActive(item.href)
                       ? "bg-[rgba(255,255,255,0.84)] text-[var(--color-ink)] shadow-[0_12px_28px_rgba(53,38,24,0.05)]"
                       : "text-[rgba(29,29,31,0.58)] hover:bg-[rgba(255,255,255,0.64)] hover:text-[var(--color-ink)]"
@@ -101,13 +100,13 @@ export function SiteHeader() {
 
             <Link
               href="/services"
-              className={`inline-flex min-h-[2.9rem] items-center justify-center rounded-full border px-5 text-sm font-semibold text-[var(--color-ink)] whitespace-nowrap transition-[background-color,color,box-shadow,border-color] duration-200 ${
+              className={`inline-flex min-h-[2.9rem] items-center justify-center rounded-full border px-5 text-[13px] font-semibold tracking-[0.02em] text-[var(--color-ink)] whitespace-nowrap transition-[background-color,color,box-shadow,border-color] duration-200 ${
                 pathname.startsWith("/services")
                   ? "border-[var(--color-line-strong)] bg-white shadow-[0_12px_28px_rgba(53,38,24,0.05)]"
                   : "border-[var(--color-line)] bg-[rgba(255,255,255,0.86)] shadow-[0_12px_28px_rgba(53,38,24,0.05)] hover:border-[var(--color-line-strong)] hover:bg-white"
               }`}
             >
-              Bags
+              Collection
             </Link>
           </div>
         </div>
@@ -119,7 +118,7 @@ export function SiteHeader() {
               onClick={() => setMenuOpen(false)}
               className="menu-link rounded-[1.35rem] bg-[var(--color-ink)] px-4 py-3 text-sm font-semibold text-white shadow-[0_12px_28px_rgba(53,38,24,0.08)]"
             >
-              Shop all bags
+              View collection
             </Link>
 
             <nav className="grid gap-2">

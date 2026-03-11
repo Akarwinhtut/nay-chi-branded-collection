@@ -14,9 +14,9 @@ import { buildMetadata } from "@/lib/metadata";
 import { formatPrice, profile, storePhoto, visitDetails } from "@/lib/site-data";
 
 export const metadata = buildMetadata({
-  title: "Home",
+  title: "Curated Branded Bags in Yangon",
   description:
-    "A calmer way to shop branded bags in Yangon, with visible prices and a more direct storefront flow.",
+    "A quieter boutique for branded bags in Yangon, with a clearer shopping edit and visible prices.",
   pathname: "/",
 });
 
@@ -34,12 +34,12 @@ export default async function HomePage() {
       <div className="mx-auto flex max-w-6xl flex-col gap-10 py-10">
         <SectionHeading
           eyebrow={profile.name}
-          title="The storefront is ready for its first bag."
-          description="Once a piece is published, the home page will open with a featured bag, quick shopping entry points, and the current collection."
+          title="The boutique is ready for its first bag."
+          description="Once a piece is published, the home page opens with the current edit and the latest arrivals."
         />
         <div className="surface-panel rounded-[2.4rem] p-8 sm:p-10">
           <Link href="/services" className="cta-button">
-            Open the collection
+            View collection
           </Link>
         </div>
       </div>
@@ -68,52 +68,51 @@ export default async function HomePage() {
     ),
   ]).slice(0, 2);
   const heroLabel = latestProducts.some((product) => product.slug === heroProduct.slug)
-    ? "New arrival"
-    : "Featured bag";
+    ? "New In"
+    : "Featured";
   const supportHighlights = [
     {
-      label: "Visible pricing",
-      value: "Prices stay upfront.",
-      note: "Clear before you ever open a product page.",
+      label: "Pricing",
+      value: "Shown upfront.",
+      note: "Clear before you open a product page.",
     },
     {
-      label: "Reply rhythm",
+      label: "Replies",
       value: visitDetails[2]?.value ?? "Same-day Telegram",
-      note: "Quick for extra photos, stock checks, and short holds.",
+      note: "Best for quick stock checks and holds.",
     },
     {
-      label: "Delivery",
+      label: "Pickup",
       value: visitDetails[3]?.value ?? "Flexible handoff",
-      note: "Pickup and delivery are confirmed directly with the store.",
+      note: "Confirmed directly with the store.",
     },
   ];
 
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-12 sm:gap-16 lg:gap-20">
-      <section className="grid gap-6 sm:gap-8 lg:grid-cols-[0.4fr_0.6fr] lg:items-end">
-        <ScrollReveal className="space-y-7" soft>
+      <section className="grid gap-6 sm:gap-8 lg:grid-cols-[0.36fr_0.64fr] lg:items-end">
+        <ScrollReveal className="space-y-6" soft>
           <div className="space-y-4">
             <p className="eyebrow">{profile.name}</p>
             <h1 className="font-display text-[3.3rem] font-medium leading-[0.88] tracking-[-0.05em] text-[var(--color-ink)] sm:text-[5.1rem] lg:text-[5.8rem]">
-              Shop the quiet edit of branded bags.
+              A quieter edit of branded bags.
             </h1>
             <p className="max-w-md text-base leading-7 text-[rgba(29,29,31,0.64)] sm:text-lg">
-              Structured totes, shoulder bags, and dressier pieces with prices shown upfront.
+              Structured day bags, shoulder silhouettes, and evening pieces with prices shown upfront.
             </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
             <Link href="/services" className="cta-button">
-              Shop bags
+              View collection
             </Link>
             <Link href="#new-arrivals" className="ghost-button">
-              New arrivals
+              New in
             </Link>
           </div>
 
           <div className="flex flex-wrap gap-3 border-t border-[var(--color-line)] pt-4">
-            <span className="inventory-pill">{products.length} bags in the edit</span>
-            <span className="inventory-pill">{visitDetails[2]?.value ?? "Same-day Telegram"}</span>
+            <span className="inventory-pill">{products.length} pieces in the edit</span>
           </div>
         </ScrollReveal>
 
@@ -153,11 +152,11 @@ export default async function HomePage() {
         <section id="new-arrivals" className="space-y-8">
           <ScrollReveal soft>
             <SectionHeading
-              eyebrow="New arrivals"
-              title="New bags, shown first."
+              eyebrow="New in"
+              title="The latest arrivals."
               action={
                 <Link href="/services" className="quiet-link">
-                  <span className="signal-label !text-[rgba(94,67,39,0.7)]">View all bags</span>
+                  <span className="signal-label !text-[rgba(94,67,39,0.7)]">View collection</span>
                 </Link>
               }
             />
@@ -180,8 +179,8 @@ export default async function HomePage() {
         <section className="space-y-8">
           <ScrollReveal soft>
             <SectionHeading
-              eyebrow="Store favorites"
-              title="Most requested bags."
+              eyebrow="Boutique edit"
+              title="Most requested pieces."
             />
           </ScrollReveal>
 
@@ -199,11 +198,11 @@ export default async function HomePage() {
                     />
 
                     <div className="space-y-4">
-                      <p className="signal-label">Store favorite</p>
+                      <p className="signal-label">Boutique favorite</p>
                       <h3 className="font-display text-[2.6rem] font-medium leading-[0.92] tracking-[-0.04em] text-[var(--color-ink)] sm:text-[3.4rem]">
                         {leadFavorite.name}
                       </h3>
-                      <p className="max-w-md text-sm leading-7 text-[rgba(29,29,31,0.62)] line-clamp-3 sm:text-base lg:line-clamp-none">
+                      <p className="max-w-md text-sm leading-7 text-[rgba(29,29,31,0.62)] line-clamp-2 sm:text-base">
                         {leadFavorite.shortDescription}
                       </p>
                       <div className="flex items-center justify-between gap-4 border-t border-[var(--color-line)] pt-4">
@@ -211,7 +210,7 @@ export default async function HomePage() {
                           {formatPrice(getCatalogProductDisplayPrice(leadFavorite))}
                         </p>
                         <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[rgba(29,29,31,0.42)]">
-                          View bag
+                          View details
                         </p>
                       </div>
                     </div>
@@ -243,15 +242,15 @@ export default async function HomePage() {
         <section className="border-y border-[var(--color-line)] py-8 sm:py-10">
           <div className="grid gap-8 lg:grid-cols-[0.4fr_0.6fr] lg:items-start">
             <div className="space-y-4">
-              <p className="eyebrow">At the store</p>
+              <p className="eyebrow">The store</p>
               <h2 className="font-display text-[3rem] font-medium leading-[0.94] tracking-[-0.04em] text-[var(--color-ink)] sm:text-[4rem]">
-                A smaller store with a clearer edit.
+                A quieter place to browse in person.
               </h2>
               <p className="max-w-xl text-base leading-7 text-[rgba(29,29,31,0.64)]">
-                Clear prices, calm product pages, and direct store details.
+                Clear prices, direct details, and a smaller in-person edit.
               </p>
               <Link href="/about" className="quiet-link">
-                <span className="signal-label !text-[rgba(94,67,39,0.7)]">Store details</span>
+                <span className="signal-label !text-[rgba(94,67,39,0.7)]">Visit the store</span>
               </Link>
             </div>
 

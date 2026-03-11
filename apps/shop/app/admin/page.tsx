@@ -40,8 +40,8 @@ export default async function AdminPage() {
         <ScrollReveal soft>
           <SectionHeading
             eyebrow="Owner tools"
-            title="Catalog admin for bag-by-bag entry."
-            description="Use this page to add products manually, edit stock counts, and control what appears in the storefront."
+            title="Add and update bags."
+            description="Create a bag, update colors and sizes, and adjust stock from one place."
             action={
               <form action="/api/admin/logout" method="post">
                 <button type="submit" className="ghost-button">

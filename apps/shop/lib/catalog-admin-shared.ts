@@ -6,6 +6,65 @@ import {
   type CatalogProduct,
 } from "@/lib/catalog-shared";
 
+const adminColorSwatches: Record<string, string> = {
+  black: "#1f1b18",
+  brown: "#6f4e37",
+  camel: "#b78b58",
+  taupe: "#8b7d70",
+  beige: "#cdbba5",
+  ivory: "#e8e0d4",
+  cream: "#efe7da",
+  white: "#f4f1eb",
+  pearl: "#ddd4cb",
+  grey: "#8c8a84",
+  gray: "#8c8a84",
+  silver: "#b8b4ae",
+  gold: "#b69a63",
+  olive: "#6b6c53",
+  green: "#617159",
+  navy: "#2f405f",
+  blue: "#496186",
+  red: "#92433f",
+  burgundy: "#6d3131",
+  pink: "#cfb0b3",
+};
+
+export function resolveAdminColorSwatch(color: string, fallback = "#c9b39b") {
+  const normalized = color.trim().toLowerCase();
+
+  if (!normalized) {
+    return fallback;
+  }
+
+  return adminColorSwatches[normalized] ?? fallback;
+}
+
+export function createEmptyCatalogVariantDraft(color = "") {
+  return {
+    color,
+    swatch: resolveAdminColorSwatch(color),
+    finish: "",
+    imageSrc: "",
+    imageAlt: "",
+    imagePosition: "center center",
+    sizes: [{ label: "Standard", stock: 0 }],
+  };
+}
+
+function createFallbackDescription(shortDescription: string) {
+  const trimmed = shortDescription.trim();
+
+  if (trimmed.length >= 20) {
+    return trimmed;
+  }
+
+  if (trimmed.length > 0) {
+    return `${trimmed} Available in selected colors and sizes.`;
+  }
+
+  return "";
+}
+
 export function slugifyAdminProductName(value: string) {
   return value
     .toLowerCase()
@@ -45,17 +104,7 @@ export function createEmptyCatalogProductDraft(): CatalogProductInput {
     isNewArrival: false,
     isPublished: true,
     displayOrder: 100,
-    variants: [
-      {
-        color: "",
-        swatch: "#c9b39b",
-        finish: "",
-        imageSrc: "",
-        imageAlt: "",
-        imagePosition: "center center",
-        sizes: [{ label: "Standard", stock: 1 }],
-      },
-    ],
+    variants: [],
   };
 }
 
@@ -113,36 +162,67 @@ export function createCatalogDraftFromProduct(product: CatalogProduct): CatalogP
 }
 
 export function normalizeCatalogDraftPayload(draft: CatalogProductInput): CatalogProductInput {
+  const name = draft.name.trim();
+  const category = draft.category.trim();
+  const shortDescription = draft.shortDescription.trim();
+  const fullDescription = draft.description.trim() || createFallbackDescription(shortDescription);
+  const normalizedVariants = draft.variants
+    .map((variant) => {
+      const color = variant.color.trim();
+      const normalizedSizes = variant.sizes
+        .map((size) => ({
+          label: size.label.trim(),
+          stock: Number.isFinite(size.stock) ? Math.max(0, size.stock) : 0,
+        }))
+        .filter((size) => size.label.length > 0 || size.stock > 0);
+
+      return {
+        ...variant,
+        color,
+        swatch: resolveAdminColorSwatch(color, variant.swatch),
+        finish: variant.finish.trim() || "Refined finish",
+        imageSrc: variant.imageSrc?.trim() ?? "",
+        imageAlt: variant.imageAlt?.trim() ?? "",
+        imagePosition: variant.imagePosition?.trim() ?? "",
+        sizes:
+          normalizedSizes.length > 0
+            ? normalizedSizes.map((size) => ({
+                label: size.label || "Standard",
+                stock: size.stock,
+              }))
+            : [{ label: "Standard", stock: 0 }],
+      };
+    })
+    .filter((variant) => variant.color.length > 0);
+
   return {
     ...draft,
     slug: slugifyAdminProductName(draft.slug || draft.name),
+    name,
+    collection: draft.collection.trim(),
+    category,
+    occasion: draft.occasion.trim() || category || "Boutique carry",
+    shortDescription,
+    description: fullDescription,
+    material: draft.material.trim() || "Refined branded finish",
+    detail: draft.detail.trim() || "Available in selected colors and sizes.",
     badges: draft.badges.map((badge) => badge.trim()).filter(Boolean),
     tags: draft.tags.map((tag) => tag.trim()).filter(Boolean),
     salePrice:
       typeof draft.salePrice === "number" && draft.salePrice > 0 ? draft.salePrice : null,
+    imageAlt: draft.imageAlt.trim() || (name ? `${name} bag` : "Branded handbag"),
     imagePosition: draft.imagePosition?.trim() || "center center",
     dimensions: draft.dimensions.trim(),
     strapLength: draft.strapLength.trim(),
     hardwareFinish: draft.hardwareFinish.trim(),
     galleryImages: draft.galleryImages
-      .map((image) => ({
+      .map((image, index) => ({
         src: image.src.trim(),
-        alt: image.alt.trim(),
+        alt: image.alt.trim() || (name ? `${name} view ${index + 1}` : `Bag view ${index + 1}`),
         position: image.position?.trim() || "center center",
       }))
-      .filter((image) => image.src.length > 0 && image.alt.length > 0),
-    variants: draft.variants.map((variant) => ({
-      ...variant,
-      color: variant.color.trim(),
-      finish: variant.finish.trim(),
-      imageSrc: variant.imageSrc?.trim() ?? "",
-      imageAlt: variant.imageAlt?.trim() ?? "",
-      imagePosition: variant.imagePosition?.trim() ?? "",
-      sizes: variant.sizes.map((size) => ({
-        label: size.label.trim(),
-        stock: Number.isFinite(size.stock) ? Math.max(0, size.stock) : 0,
-      })),
-    })),
+      .filter((image) => image.src.length > 0),
+    variants: normalizedVariants,
   };
 }
 

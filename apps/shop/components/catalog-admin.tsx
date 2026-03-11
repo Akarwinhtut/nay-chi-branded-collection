@@ -16,10 +16,12 @@ import {
   buildAdminProductSearchText,
   createCatalogDraftFromProduct,
   createEmptyCatalogProductDraft,
+  createEmptyCatalogVariantDraft,
   formatInventoryStatusLabel,
   getAdminProductInventorySummary,
   getAdminProductPriceSummary,
   normalizeCatalogDraftPayload,
+  resolveAdminColorSwatch,
   slugifyAdminProductName,
   sortAdminProducts,
 } from "@/lib/catalog-admin-shared";
@@ -298,6 +300,9 @@ function titleCase(value: string) {
   return value.charAt(0).toUpperCase() + value.slice(1);
 }
 
+const commonColorLabels = ["Black", "Brown", "Camel", "Taupe", "Ivory", "Pearl"];
+const commonSizeLabels = ["Mini", "Small", "Medium", "Large", "Standard"];
+
 export function CatalogAdmin({
   initialProducts,
   storageReady,
@@ -315,6 +320,7 @@ export function CatalogAdmin({
   const [query, setQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("All");
   const [stockFilter, setStockFilter] = useState<StockFilter>("all");
+  const [customColorDraft, setCustomColorDraft] = useState("");
   const [attributeDrafts, setAttributeDrafts] = useState<AttributeFormState>({
     collection: { from: "", to: "" },
     color: { from: "", to: "" },
@@ -403,9 +409,23 @@ export function CatalogAdmin({
     : null;
 
   const previewGalleryImages = draft.galleryImages.filter(
-    (image) => image.src.trim().length > 0 && image.alt.trim().length > 0,
+    (image) => image.src.trim().length > 0,
   );
   const draftInventory = useMemo(() => getDraftInventorySummary(draft), [draft]);
+  const suggestedColorLabels = useMemo(
+    () =>
+      Array.from(new Set([...commonColorLabels, ...colors])).sort((left, right) =>
+        left.localeCompare(right),
+      ),
+    [colors],
+  );
+  const suggestedSizeLabels = useMemo(
+    () =>
+      Array.from(new Set([...commonSizeLabels, ...sizes])).sort((left, right) =>
+        left.localeCompare(right),
+      ),
+    [sizes],
+  );
 
   useEffect(() => {
     if (slugTouched) {
@@ -432,6 +452,7 @@ export function CatalogAdmin({
   function resetDraft() {
     setEditingId(null);
     setDraft(createEmptyCatalogProductDraft());
+    setCustomColorDraft("");
     setSlugTouched(false);
     setNotice(null);
     scrollFormIntoView();
@@ -440,6 +461,7 @@ export function CatalogAdmin({
   function startEditing(product: CatalogProduct) {
     setEditingId(product.id);
     setDraft(createCatalogDraftFromProduct(product));
+    setCustomColorDraft("");
     setSlugTouched(true);
     setNotice(null);
     scrollFormIntoView();
@@ -491,6 +513,73 @@ export function CatalogAdmin({
         index === imageIndex ? updater(image) : image,
       ),
     }));
+  }
+
+  function addVariant(color = "") {
+    const normalizedColor = color.trim();
+
+    if (
+      normalizedColor &&
+      draft.variants.some(
+        (variant) => variant.color.trim().toLowerCase() === normalizedColor.toLowerCase(),
+      )
+    ) {
+      setNotice({
+        tone: "error",
+        message: `${normalizedColor} is already in this bag.`,
+      });
+      return;
+    }
+
+    updateDraftField("variants", [...draft.variants, createEmptyCatalogVariantDraft(normalizedColor)]);
+    setNotice(null);
+  }
+
+  function addSizeToVariant(variantIndex: number, label = "Standard") {
+    updateVariant(variantIndex, (currentVariant) => {
+      if (
+        currentVariant.sizes.some(
+          (size) => size.label.trim().toLowerCase() === label.trim().toLowerCase(),
+        )
+      ) {
+        return currentVariant;
+      }
+
+      return {
+        ...currentVariant,
+        sizes: [...currentVariant.sizes, { label, stock: 0 }],
+      };
+    });
+  }
+
+  function addBlankSizeToVariant(variantIndex: number) {
+    updateVariant(variantIndex, (currentVariant) => {
+      if (
+        currentVariant.sizes.some((size) => size.label.trim().length === 0 && size.stock === 0)
+      ) {
+        return currentVariant;
+      }
+
+      return {
+        ...currentVariant,
+        sizes: [...currentVariant.sizes, { label: "", stock: 0 }],
+      };
+    });
+  }
+
+  function handleAddCustomColor() {
+    const color = customColorDraft.trim();
+
+    if (!color) {
+      setNotice({
+        tone: "error",
+        message: "Type a color name before adding it.",
+      });
+      return;
+    }
+
+    addVariant(color);
+    setCustomColorDraft("");
   }
 
   async function refreshCatalog(productIdToSelect?: string | null) {
@@ -588,6 +677,15 @@ export function CatalogAdmin({
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
+    if (normalizeCatalogDraftPayload(draft).variants.length === 0) {
+      setNotice({
+        tone: "error",
+        message: "Add at least one color before saving this bag.",
+      });
+      return;
+    }
+
     await persistProduct(
       draft,
       editingId ?? undefined,
@@ -700,7 +798,7 @@ export function CatalogAdmin({
   return (
     <>
       <div className="grid gap-8 xl:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] xl:items-start">
-        <div className="space-y-6">
+        <div className="order-2 space-y-6 xl:order-1">
           <section className="rounded-[1.8rem] border border-[rgba(32,24,20,0.08)] bg-[rgba(255,255,255,0.9)] p-6 shadow-[0_20px_38px_rgba(32,24,20,0.04)]">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div className="space-y-2">
@@ -708,11 +806,10 @@ export function CatalogAdmin({
                   Admin overview
                 </p>
                 <h2 className="text-[2rem] font-semibold tracking-[-0.05em] text-[var(--color-ink)] sm:text-[2.4rem]">
-                  Practical catalog control for the store owner.
+                  Simple catalog editor for the store owner.
                 </h2>
                 <p className="max-w-2xl text-sm leading-7 text-[rgba(29,29,31,0.58)]">
-                  Add bags, correct stock, and keep the storefront accurate without a complicated
-                  dashboard.
+                  Add bags, adjust stock, and keep the storefront accurate without a complicated dashboard.
                 </p>
               </div>
 
@@ -779,84 +876,89 @@ export function CatalogAdmin({
           <section className="rounded-[1.8rem] border border-[rgba(32,24,20,0.08)] bg-white p-6 shadow-[0_20px_38px_rgba(32,24,20,0.04)]">
             <div className="space-y-2">
               <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[rgba(94,67,39,0.58)]">
-                Catalog labels
+                Shared labels
               </p>
               <h2 className="text-[1.7rem] font-semibold tracking-[-0.04em] text-[var(--color-ink)]">
-                Rename shared collections, colors, and sizes.
+                Rename collections, colors, and sizes.
               </h2>
               <p className="text-sm leading-7 text-[rgba(29,29,31,0.58)]">
-                Use this when the owner wants to clean up a label across multiple products at once.
-                New labels can still be added directly in the product form.
+                Keep this for cleanup only. Most daily updates should happen in the product form.
               </p>
             </div>
 
-            <div className="mt-5 grid gap-4 lg:grid-cols-3">
-              <AttributeManagerCard
-                title="Collections"
-                description="Rename a collection or brand label everywhere it appears."
-                options={collections}
-                currentValue={attributeDrafts.collection.from}
-                replacementValue={attributeDrafts.collection.to}
-                onCurrentValueChange={(value) =>
-                  setAttributeDrafts((current) => ({
-                    ...current,
-                    collection: { ...current.collection, from: value },
-                  }))
-                }
-                onReplacementValueChange={(value) =>
-                  setAttributeDrafts((current) => ({
-                    ...current,
-                    collection: { ...current.collection, to: value },
-                  }))
-                }
-                onSubmit={() => handleRenameAttribute("collection")}
-                submitting={submitting}
-              />
+            <details className="mt-5 rounded-[1.25rem] border border-[rgba(32,24,20,0.08)] bg-[rgba(246,241,234,0.45)] p-4">
+              <summary className="cursor-pointer text-sm font-semibold text-[var(--color-ink)]">
+                Open label tools
+              </summary>
 
-              <AttributeManagerCard
-                title="Colors"
-                description="Rename a colorway label across all matching bags."
-                options={colors}
-                currentValue={attributeDrafts.color.from}
-                replacementValue={attributeDrafts.color.to}
-                onCurrentValueChange={(value) =>
-                  setAttributeDrafts((current) => ({
-                    ...current,
-                    color: { ...current.color, from: value },
-                  }))
-                }
-                onReplacementValueChange={(value) =>
-                  setAttributeDrafts((current) => ({
-                    ...current,
-                    color: { ...current.color, to: value },
-                  }))
-                }
-                onSubmit={() => handleRenameAttribute("color")}
-                submitting={submitting}
-              />
+              <div className="mt-4 grid gap-4 lg:grid-cols-3">
+                <AttributeManagerCard
+                  title="Collections"
+                  description="Rename a collection or brand label everywhere it appears."
+                  options={collections}
+                  currentValue={attributeDrafts.collection.from}
+                  replacementValue={attributeDrafts.collection.to}
+                  onCurrentValueChange={(value) =>
+                    setAttributeDrafts((current) => ({
+                      ...current,
+                      collection: { ...current.collection, from: value },
+                    }))
+                  }
+                  onReplacementValueChange={(value) =>
+                    setAttributeDrafts((current) => ({
+                      ...current,
+                      collection: { ...current.collection, to: value },
+                    }))
+                  }
+                  onSubmit={() => handleRenameAttribute("collection")}
+                  submitting={submitting}
+                />
 
-              <AttributeManagerCard
-                title="Sizes"
-                description="Rename a size label across all matching products."
-                options={sizes}
-                currentValue={attributeDrafts.size.from}
-                replacementValue={attributeDrafts.size.to}
-                onCurrentValueChange={(value) =>
-                  setAttributeDrafts((current) => ({
-                    ...current,
-                    size: { ...current.size, from: value },
-                  }))
-                }
-                onReplacementValueChange={(value) =>
-                  setAttributeDrafts((current) => ({
-                    ...current,
-                    size: { ...current.size, to: value },
-                  }))
-                }
-                onSubmit={() => handleRenameAttribute("size")}
-                submitting={submitting}
-              />
-            </div>
+                <AttributeManagerCard
+                  title="Colors"
+                  description="Rename a colorway label across all matching bags."
+                  options={colors}
+                  currentValue={attributeDrafts.color.from}
+                  replacementValue={attributeDrafts.color.to}
+                  onCurrentValueChange={(value) =>
+                    setAttributeDrafts((current) => ({
+                      ...current,
+                      color: { ...current.color, from: value },
+                    }))
+                  }
+                  onReplacementValueChange={(value) =>
+                    setAttributeDrafts((current) => ({
+                      ...current,
+                      color: { ...current.color, to: value },
+                    }))
+                  }
+                  onSubmit={() => handleRenameAttribute("color")}
+                  submitting={submitting}
+                />
+
+                <AttributeManagerCard
+                  title="Sizes"
+                  description="Rename a size label across all matching products."
+                  options={sizes}
+                  currentValue={attributeDrafts.size.from}
+                  replacementValue={attributeDrafts.size.to}
+                  onCurrentValueChange={(value) =>
+                    setAttributeDrafts((current) => ({
+                      ...current,
+                      size: { ...current.size, from: value },
+                    }))
+                  }
+                  onReplacementValueChange={(value) =>
+                    setAttributeDrafts((current) => ({
+                      ...current,
+                      size: { ...current.size, to: value },
+                    }))
+                  }
+                  onSubmit={() => handleRenameAttribute("size")}
+                  submitting={submitting}
+                />
+              </div>
+            </details>
           </section>
 
           <section className="rounded-[1.8rem] border border-[rgba(32,24,20,0.08)] bg-white p-6 shadow-[0_20px_38px_rgba(32,24,20,0.04)]">
@@ -1059,7 +1161,7 @@ export function CatalogAdmin({
           </section>
         </div>
 
-        <form ref={formRef} onSubmit={handleSubmit} className="space-y-5">
+        <form ref={formRef} onSubmit={handleSubmit} className="order-1 space-y-5 xl:order-2">
           <section className="rounded-[1.8rem] border border-[rgba(32,24,20,0.08)] bg-[rgba(255,255,255,0.94)] p-6 shadow-[0_20px_38px_rgba(32,24,20,0.05)]">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
@@ -1069,6 +1171,10 @@ export function CatalogAdmin({
                 <h2 className="mt-2 text-[1.85rem] font-semibold tracking-[-0.04em] text-[var(--color-ink)]">
                   {editingId ? draft.name || "Update selected bag" : "Create a new bag"}
                 </h2>
+                <p className="mt-2 max-w-xl text-sm leading-6 text-[rgba(29,29,31,0.58)]">
+                  Start with the essentials. Colors, sizes, and stock are grouped together so the
+                  owner can update inventory quickly.
+                </p>
               </div>
 
               <div className="flex flex-wrap gap-2">
@@ -1087,33 +1193,33 @@ export function CatalogAdmin({
                 </button>
               </div>
             </div>
+
+            <div className="mt-5 flex flex-wrap gap-2 border-t border-[rgba(32,24,20,0.08)] pt-4">
+              {["1. Basic info", "2. Details", "3. Variants", "4. Images", "5. Stock"].map(
+                (step) => (
+                  <span
+                    key={step}
+                    className="inline-flex rounded-full border border-[rgba(32,24,20,0.08)] bg-[rgba(246,241,234,0.65)] px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-[rgba(29,29,31,0.58)]"
+                  >
+                    {step}
+                  </span>
+                ),
+              )}
+            </div>
           </section>
 
           <Section
-            title="Basic product info"
-            description="Keep the first section focused on what the owner needs most often."
+            title="1. Basic information"
+            description="Only the core selling details. Fill these first before anything else."
           >
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="space-y-2">
-                <span className="field-label">Product name</span>
+                <span className="field-label">Bag name</span>
                 <input
                   value={draft.name}
                   onChange={(event) => updateDraftField("name", event.target.value)}
                   className="field-control"
                   placeholder="David Jones Taupe Carryall"
-                />
-              </label>
-
-              <label className="space-y-2">
-                <span className="field-label">Slug</span>
-                <input
-                  value={draft.slug}
-                  onChange={(event) => {
-                    setSlugTouched(true);
-                    updateDraftField("slug", slugifyAdminProductName(event.target.value));
-                  }}
-                  className="field-control"
-                  placeholder="david-jones-taupe-carryall"
                 />
               </label>
 
@@ -1129,36 +1235,13 @@ export function CatalogAdmin({
               </label>
 
               <label className="space-y-2">
-                <span className="field-label">Category</span>
+                <span className="field-label">Bag type</span>
                 <input
                   list="admin-category-options"
                   value={draft.category}
                   onChange={(event) => updateDraftField("category", event.target.value)}
                   className="field-control"
                   placeholder="Shoulder Bag"
-                />
-              </label>
-
-              <label className="space-y-2">
-                <span className="field-label">Occasion</span>
-                <input
-                  value={draft.occasion}
-                  onChange={(event) => updateDraftField("occasion", event.target.value)}
-                  className="field-control"
-                  placeholder="Workday carry"
-                />
-              </label>
-
-              <label className="space-y-2">
-                <span className="field-label">Display order</span>
-                <input
-                  type="number"
-                  min={0}
-                  value={draft.displayOrder}
-                  onChange={(event) =>
-                    updateDraftField("displayOrder", Number(event.target.value) || 0)
-                  }
-                  className="field-control"
                 />
               </label>
 
@@ -1193,107 +1276,21 @@ export function CatalogAdmin({
           </Section>
 
           <Section
-            title="Storefront visibility"
-            description="These switches control where the bag appears and how inventory status is shown."
+            title="2. Product details"
+            description="Keep the wording short and clear. These are the only text fields the owner should need most of the time."
           >
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid gap-4">
               <label className="space-y-2">
-                <span className="field-label">Low stock threshold</span>
-                <input
-                  type="number"
-                  min={1}
-                  value={draft.inventoryThreshold}
-                  onChange={(event) =>
-                    updateDraftField("inventoryThreshold", Number(event.target.value) || 1)
-                  }
-                  className="field-control"
-                />
-              </label>
-
-              <label className="space-y-2">
-                <span className="field-label">Manual stock status override</span>
-                <select
-                  value={draft.inventoryStatusOverride ?? ""}
-                  onChange={(event) =>
-                    updateDraftField(
-                      "inventoryStatusOverride",
-                      event.target.value === ""
-                        ? null
-                        : (event.target.value as CatalogInventoryStatus),
-                    )
-                  }
-                  className="field-control"
-                >
-                  <option value="">Automatic from stock</option>
-                  <option value="in_stock">In stock</option>
-                  <option value="low_stock">Low stock</option>
-                  <option value="sold_out">Sold out</option>
-                </select>
-              </label>
-            </div>
-
-            <div className="grid gap-4 sm:grid-cols-2">
-              <ToggleField
-                label="Published on storefront"
-                checked={draft.isPublished}
-                onChange={(checked) => updateDraftField("isPublished", checked)}
-                hint="Turn this off to hide the bag without deleting it."
-              />
-              <ToggleField
-                label="Featured bag"
-                checked={draft.isFeatured}
-                onChange={(checked) => updateDraftField("isFeatured", checked)}
-                hint="Shows earlier in curated storefront sections."
-              />
-              <ToggleField
-                label="New arrival"
-                checked={draft.isNewArrival}
-                onChange={(checked) => updateDraftField("isNewArrival", checked)}
-                hint="Places the bag into the new-arrivals logic."
-              />
-              <ToggleField
-                label="Trending"
-                checked={draft.isTrending}
-                onChange={(checked) => updateDraftField("isTrending", checked)}
-                hint="Marks the bag as a popular product in recommendations."
-              />
-              <ToggleField
-                label="Archived"
-                checked={draft.isArchived}
-                onChange={(checked) => updateDraftField("isArchived", checked)}
-                hint="Keeps the product in admin, but removes it from public browsing."
-              />
-            </div>
-
-            <div className="rounded-[1.2rem] border border-[rgba(32,24,20,0.08)] bg-[rgba(246,241,234,0.6)] px-4 py-4">
-              <div className="flex flex-wrap items-center gap-3">
-                <StatusBadge status={draftInventory.status} />
-                <p className="text-sm font-medium text-[var(--color-ink)]">
-                  {draftInventory.quantity} total pieces
-                </p>
-                <p className="text-sm text-[rgba(29,29,31,0.56)]">
-                  Automatic status: {formatInventoryStatusLabel(draftInventory.autoStatus)}
-                </p>
-              </div>
-            </div>
-          </Section>
-
-          <Section
-            title="Descriptions and labels"
-            description="Keep the copy tight. Product cards should rely mostly on image, name, and price."
-          >
-            <div className="grid gap-4 sm:grid-cols-2">
-              <label className="space-y-2 sm:col-span-2">
                 <span className="field-label">Short description</span>
                 <textarea
                   value={draft.shortDescription}
                   onChange={(event) => updateDraftField("shortDescription", event.target.value)}
-                  className="field-control min-h-[7rem]"
-                  placeholder="Short, practical product summary."
+                  className="field-control min-h-[6rem]"
+                  placeholder="Short product line for cards and quick browsing."
                 />
               </label>
 
-              <label className="space-y-2 sm:col-span-2">
+              <label className="space-y-2">
                 <span className="field-label">Full description</span>
                 <textarea
                   value={draft.description}
@@ -1302,111 +1299,270 @@ export function CatalogAdmin({
                   placeholder="Full description for the product detail page."
                 />
               </label>
-
-              <label className="space-y-2">
-                <span className="field-label">Material</span>
-                <input
-                  value={draft.material}
-                  onChange={(event) => updateDraftField("material", event.target.value)}
-                  className="field-control"
-                  placeholder="Pebbled faux leather"
-                />
-              </label>
-
-              <label className="space-y-2">
-                <span className="field-label">Detail note</span>
-                <input
-                  value={draft.detail}
-                  onChange={(event) => updateDraftField("detail", event.target.value)}
-                  className="field-control"
-                  placeholder="Zip closure, detachable strap"
-                />
-              </label>
-
-              <label className="space-y-2">
-                <span className="field-label">Dimensions</span>
-                <input
-                  value={draft.dimensions}
-                  onChange={(event) => updateDraftField("dimensions", event.target.value)}
-                  className="field-control"
-                  placeholder="24 x 16 x 8 cm"
-                />
-              </label>
-
-              <label className="space-y-2">
-                <span className="field-label">Strap length</span>
-                <input
-                  value={draft.strapLength}
-                  onChange={(event) => updateDraftField("strapLength", event.target.value)}
-                  className="field-control"
-                  placeholder="Adjustable shoulder strap"
-                />
-              </label>
-
-              <label className="space-y-2 sm:col-span-2">
-                <span className="field-label">Hardware finish</span>
-                <input
-                  value={draft.hardwareFinish}
-                  onChange={(event) => updateDraftField("hardwareFinish", event.target.value)}
-                  className="field-control"
-                  placeholder="Brushed gold hardware"
-                />
-              </label>
-
-              <label className="space-y-2 sm:col-span-2">
-                <span className="field-label">Badges</span>
-                <textarea
-                  value={draft.badges.join(", ")}
-                  onChange={(event) => updateDraftField("badges", parseListInput(event.target.value))}
-                  className="field-control min-h-[5.5rem]"
-                  placeholder="Best seller, Workday carry"
-                />
-              </label>
-
-              <label className="space-y-2 sm:col-span-2">
-                <span className="field-label">Tags</span>
-                <textarea
-                  value={(draft.tags ?? []).join(", ")}
-                  onChange={(event) => updateDraftField("tags", parseListInput(event.target.value))}
-                  className="field-control min-h-[5.5rem]"
-                  placeholder="taupe, structured, office"
-                />
-              </label>
             </div>
           </Section>
 
           <Section
-            title="Images"
-            description="Use direct site paths or full URLs. Gallery images are optional but useful for the detail page."
+            title="3. Variants"
+            description="Add a color, then set the sizes and stock directly underneath it."
           >
-            <div className="grid gap-4 sm:grid-cols-2">
-              <label className="space-y-2 sm:col-span-2">
-                <span className="field-label">Main image path</span>
+            <div className="rounded-[1.25rem] border border-[rgba(32,24,20,0.08)] bg-[rgba(246,241,234,0.56)] p-4">
+              <div className="flex flex-col gap-4">
+                <div>
+                  <p className="text-sm font-semibold text-[var(--color-ink)]">
+                    {draftInventory.quantity} total pieces
+                  </p>
+                  <p className="text-sm leading-6 text-[rgba(29,29,31,0.56)]">
+                    Stock is summed automatically from the size rows below.
+                  </p>
+                </div>
+
+                <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
+                  <label className="space-y-2">
+                    <span className="field-label">Custom color name</span>
+                    <input
+                      value={customColorDraft}
+                      onChange={(event) => setCustomColorDraft(event.target.value)}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter") {
+                          event.preventDefault();
+                          handleAddCustomColor();
+                        }
+                      }}
+                      className="field-control"
+                      placeholder="Black Cherry"
+                    />
+                  </label>
+
+                  <button
+                    type="button"
+                    onClick={handleAddCustomColor}
+                    className="cta-button"
+                  >
+                    Add custom color
+                  </button>
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  {suggestedColorLabels.slice(0, 6).map((color) => {
+                    const alreadyUsed = draft.variants.some(
+                      (variant) => variant.color.trim().toLowerCase() === color.toLowerCase(),
+                    );
+
+                    return (
+                      <button
+                        key={color}
+                        type="button"
+                        onClick={() => addVariant(color)}
+                        className="ghost-button"
+                        disabled={alreadyUsed}
+                      >
+                        {alreadyUsed ? `${color} added` : `Add ${color}`}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              {draft.variants.length === 0 ? (
+                <div className="rounded-[1.25rem] border border-dashed border-[rgba(32,24,20,0.12)] bg-[rgba(246,241,234,0.38)] px-5 py-6">
+                  <p className="text-sm font-semibold text-[var(--color-ink)]">
+                    No colors added yet.
+                  </p>
+                  <p className="mt-2 text-sm leading-6 text-[rgba(29,29,31,0.58)]">
+                    Type any color name above, like Black Cherry, or choose one of the suggested colors.
+                  </p>
+                </div>
+              ) : (
+                draft.variants.map((variant, variantIndex) => {
+                  const variantQuantity = variant.sizes.reduce(
+                    (sum, size) => sum + (Number.isFinite(size.stock) ? Math.max(size.stock, 0) : 0),
+                    0,
+                  );
+
+                  return (
+                    <div
+                      key={`${variantIndex}-${variant.color || "variant"}`}
+                      className="space-y-4 rounded-[1.25rem] border border-[rgba(32,24,20,0.08)] bg-white p-4"
+                    >
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <div className="space-y-1">
+                          <p className="signal-label">Color {variantIndex + 1}</p>
+                          <h4 className="text-lg font-semibold tracking-[-0.02em] text-[var(--color-ink)]">
+                            {variant.color || "New color"}
+                          </h4>
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="inline-flex items-center gap-2 rounded-full border border-[rgba(32,24,20,0.08)] bg-[rgba(246,241,234,0.65)] px-3 py-2 text-xs font-medium text-[rgba(29,29,31,0.68)]">
+                            <span
+                              className="h-3 w-3 rounded-full border border-[rgba(32,24,20,0.08)]"
+                              style={{
+                                backgroundColor: resolveAdminColorSwatch(
+                                  variant.color,
+                                  variant.swatch,
+                                ),
+                              }}
+                            />
+                            {variantQuantity} pieces
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              updateDraftField(
+                                "variants",
+                                draft.variants.filter((_, currentIndex) => currentIndex !== variantIndex),
+                              )
+                            }
+                            className="ghost-button"
+                          >
+                            Remove color
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
+                        <label className="space-y-2">
+                          <span className="field-label">Color</span>
+                          <input
+                            list="admin-color-options"
+                            value={variant.color}
+                            onChange={(event) =>
+                              updateVariant(variantIndex, (currentVariant) => ({
+                                ...currentVariant,
+                                color: event.target.value,
+                                swatch: resolveAdminColorSwatch(
+                                  event.target.value,
+                                  currentVariant.swatch,
+                                ),
+                              }))
+                            }
+                            className="field-control"
+                            placeholder="Black Cherry"
+                          />
+                        </label>
+
+                        <div className="flex items-center gap-2 rounded-full border border-[rgba(32,24,20,0.08)] bg-[rgba(246,241,234,0.55)] px-4 py-3">
+                          <span
+                            className="h-3.5 w-3.5 rounded-full border border-[rgba(32,24,20,0.08)]"
+                            style={{
+                              backgroundColor: resolveAdminColorSwatch(
+                                variant.color,
+                                variant.swatch,
+                              ),
+                            }}
+                          />
+                          <span className="text-sm font-medium text-[rgba(29,29,31,0.66)]">
+                            Swatch preview
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="space-y-3">
+                        <div className="flex flex-wrap gap-2">
+                          {suggestedSizeLabels.map((label) => {
+                            const hasSize = variant.sizes.some(
+                              (size) => size.label.trim().toLowerCase() === label.toLowerCase(),
+                            );
+
+                            return (
+                              <button
+                                key={`${variantIndex}-${label}`}
+                                type="button"
+                                onClick={() => addSizeToVariant(variantIndex, label)}
+                                className="ghost-button"
+                                disabled={hasSize}
+                              >
+                                {hasSize ? `${label} added` : label}
+                              </button>
+                            );
+                          })}
+
+                          <button
+                            type="button"
+                            onClick={() => addBlankSizeToVariant(variantIndex)}
+                            className="ghost-button"
+                          >
+                            Add size row
+                          </button>
+                        </div>
+
+                        {variant.sizes.map((size, sizeIndex) => (
+                          <div
+                            key={`${variantIndex}-${sizeIndex}-${size.label || "size"}`}
+                            className="grid gap-3 rounded-[1rem] border border-[rgba(32,24,20,0.08)] bg-[rgba(246,241,234,0.38)] p-3 sm:grid-cols-[minmax(0,1fr)_8rem_auto]"
+                          >
+                            <label className="space-y-2">
+                              <span className="field-label">Size</span>
+                              <input
+                                list="admin-size-options"
+                                value={size.label}
+                                onChange={(event) =>
+                                  updateSize(variantIndex, sizeIndex, (currentSize) => ({
+                                    ...currentSize,
+                                    label: event.target.value,
+                                  }))
+                                }
+                                className="field-control"
+                                placeholder="Standard"
+                              />
+                            </label>
+
+                            <label className="space-y-2">
+                              <span className="field-label">Stock</span>
+                              <input
+                                type="number"
+                                min={0}
+                                value={size.stock}
+                                onChange={(event) =>
+                                  updateSize(variantIndex, sizeIndex, (currentSize) => ({
+                                    ...currentSize,
+                                    stock: Number(event.target.value) || 0,
+                                  }))
+                                }
+                                className="field-control"
+                              />
+                            </label>
+
+                            <button
+                              type="button"
+                              onClick={() =>
+                                updateVariant(variantIndex, (currentVariant) => ({
+                                  ...currentVariant,
+                                  sizes: currentVariant.sizes.filter(
+                                    (_, currentIndex) => currentIndex !== sizeIndex,
+                                  ),
+                                }))
+                              }
+                              className="ghost-button self-end"
+                              disabled={variant.sizes.length === 1}
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </Section>
+
+          <Section
+            title="4. Images"
+            description="Add the featured image first. Gallery images are optional."
+          >
+            <div className="grid gap-4">
+              <label className="space-y-2">
+                <span className="field-label">Featured image path</span>
                 <input
                   value={draft.imageSrc}
                   onChange={(event) => updateDraftField("imageSrc", event.target.value)}
                   className="field-control"
                   placeholder="/products/david-jones/taupe-carryall.jpg"
-                />
-              </label>
-
-              <label className="space-y-2 sm:col-span-2">
-                <span className="field-label">Main image alt</span>
-                <input
-                  value={draft.imageAlt}
-                  onChange={(event) => updateDraftField("imageAlt", event.target.value)}
-                  className="field-control"
-                  placeholder="Describe the bag image clearly."
-                />
-              </label>
-
-              <label className="space-y-2 sm:col-span-2">
-                <span className="field-label">Main image position</span>
-                <input
-                  value={draft.imagePosition}
-                  onChange={(event) => updateDraftField("imagePosition", event.target.value)}
-                  className="field-control"
-                  placeholder="center center"
                 />
               </label>
             </div>
@@ -1444,8 +1600,8 @@ export function CatalogAdmin({
                 <div className="space-y-3">
                   {draft.galleryImages.map((image, imageIndex) => (
                     <div
-                      key={`gallery-${imageIndex}`}
-                      className="grid gap-3 rounded-[1.2rem] border border-[rgba(32,24,20,0.08)] bg-white p-4"
+                      key={`gallery-after-${imageIndex}`}
+                      className="grid gap-3 rounded-[1.2rem] border border-[rgba(32,24,20,0.08)] bg-white p-4 sm:grid-cols-[minmax(0,1fr)_auto]"
                     >
                       <label className="space-y-2">
                         <span className="field-label">Image path</span>
@@ -1461,48 +1617,18 @@ export function CatalogAdmin({
                           placeholder="/products/david-jones/gallery-1.jpg"
                         />
                       </label>
-                      <label className="space-y-2">
-                        <span className="field-label">Alt text</span>
-                        <input
-                          value={image.alt}
-                          onChange={(event) =>
-                            updateGalleryImage(imageIndex, (currentImage) => ({
-                              ...currentImage,
-                              alt: event.target.value,
-                            }))
-                          }
-                          className="field-control"
-                          placeholder="Describe this gallery image"
-                        />
-                      </label>
-                      <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto]">
-                        <label className="space-y-2">
-                          <span className="field-label">Image position</span>
-                          <input
-                            value={image.position ?? ""}
-                            onChange={(event) =>
-                              updateGalleryImage(imageIndex, (currentImage) => ({
-                                ...currentImage,
-                                position: event.target.value,
-                              }))
-                            }
-                            className="field-control"
-                            placeholder="center center"
-                          />
-                        </label>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            updateDraftField(
-                              "galleryImages",
-                              draft.galleryImages.filter((_, currentIndex) => currentIndex !== imageIndex),
-                            )
-                          }
-                          className="ghost-button self-end"
-                        >
-                          Remove
-                        </button>
-                      </div>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          updateDraftField(
+                            "galleryImages",
+                            draft.galleryImages.filter((_, currentIndex) => currentIndex !== imageIndex),
+                          )
+                        }
+                        className="ghost-button self-end"
+                      >
+                        Remove
+                      </button>
                     </div>
                   ))}
                 </div>
@@ -1514,14 +1640,14 @@ export function CatalogAdmin({
 
               {previewGalleryImages.length > 0 ? (
                 <div className="grid gap-3 sm:grid-cols-3">
-                  {previewGalleryImages.slice(0, 3).map((image) => (
+                  {previewGalleryImages.slice(0, 3).map((image, index) => (
                     <div
-                      key={`${image.src}-${image.alt}`}
+                      key={`${image.src}-after-${index}`}
                       className="rounded-[1.15rem] border border-[rgba(32,24,20,0.08)] bg-[rgba(246,241,234,0.54)] p-3"
                     >
                       <ProductImage
                         src={image.src}
-                        alt={image.alt}
+                        alt={image.alt || `${draft.name || "Bag"} gallery view`}
                         position={image.position}
                         className="min-h-[9rem] rounded-[0.95rem]"
                         sizes="(max-width: 1280px) 100vw, 200px"
@@ -1534,227 +1660,229 @@ export function CatalogAdmin({
           </Section>
 
           <Section
-            title="Colors, sizes, and stock"
-            description="Add each colorway once, then assign the sizes and stock counts underneath it."
+            title="5. Inventory status"
+            description="This updates automatically from the stock quantities above."
           >
-            <div className="space-y-4">
-              {draft.variants.map((variant, variantIndex) => {
-                const variantQuantity = variant.sizes.reduce(
-                  (sum, size) => sum + (Number.isFinite(size.stock) ? Math.max(size.stock, 0) : 0),
-                  0,
-                );
-
-                return (
-                  <div
-                    key={`${variantIndex}-${variant.color || "variant"}`}
-                    className="space-y-4 rounded-[1.25rem] border border-[rgba(32,24,20,0.08)] bg-white p-4"
-                  >
-                    <div className="flex flex-wrap items-center justify-between gap-3">
-                      <div>
-                        <p className="text-sm font-semibold text-[var(--color-ink)]">
-                          Colorway {variantIndex + 1}
-                        </p>
-                        <p className="text-sm leading-6 text-[rgba(29,29,31,0.56)]">
-                          {variantQuantity} pieces across this colorway.
-                        </p>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          updateDraftField(
-                            "variants",
-                            draft.variants.filter((_, currentIndex) => currentIndex !== variantIndex),
-                          )
-                        }
-                        className="ghost-button"
-                        disabled={draft.variants.length === 1}
-                      >
-                        Remove colorway
-                      </button>
-                    </div>
-
-                    <div className="grid gap-4 sm:grid-cols-2">
-                      <label className="space-y-2">
-                        <span className="field-label">Color</span>
-                        <input
-                          list="admin-color-options"
-                          value={variant.color}
-                          onChange={(event) =>
-                            updateVariant(variantIndex, (currentVariant) => ({
-                              ...currentVariant,
-                              color: event.target.value,
-                            }))
-                          }
-                          className="field-control"
-                          placeholder="Taupe"
-                        />
-                      </label>
-
-                      <label className="space-y-2">
-                        <span className="field-label">Swatch</span>
-                        <input
-                          value={variant.swatch}
-                          onChange={(event) =>
-                            updateVariant(variantIndex, (currentVariant) => ({
-                              ...currentVariant,
-                              swatch: event.target.value,
-                            }))
-                          }
-                          className="field-control"
-                          placeholder="#84796d"
-                        />
-                      </label>
-
-                      <label className="space-y-2 sm:col-span-2">
-                        <span className="field-label">Finish note</span>
-                        <input
-                          value={variant.finish}
-                          onChange={(event) =>
-                            updateVariant(variantIndex, (currentVariant) => ({
-                              ...currentVariant,
-                              finish: event.target.value,
-                            }))
-                          }
-                          className="field-control"
-                          placeholder="Soft pebble grain"
-                        />
-                      </label>
-
-                      <label className="space-y-2 sm:col-span-2">
-                        <span className="field-label">Variant image path (optional)</span>
-                        <input
-                          value={variant.imageSrc}
-                          onChange={(event) =>
-                            updateVariant(variantIndex, (currentVariant) => ({
-                              ...currentVariant,
-                              imageSrc: event.target.value,
-                            }))
-                          }
-                          className="field-control"
-                          placeholder="Leave blank to use the main image"
-                        />
-                      </label>
-
-                      <label className="space-y-2">
-                        <span className="field-label">Variant image alt</span>
-                        <input
-                          value={variant.imageAlt}
-                          onChange={(event) =>
-                            updateVariant(variantIndex, (currentVariant) => ({
-                              ...currentVariant,
-                              imageAlt: event.target.value,
-                            }))
-                          }
-                          className="field-control"
-                          placeholder="Optional variant image alt"
-                        />
-                      </label>
-
-                      <label className="space-y-2">
-                        <span className="field-label">Variant image position</span>
-                        <input
-                          value={variant.imagePosition}
-                          onChange={(event) =>
-                            updateVariant(variantIndex, (currentVariant) => ({
-                              ...currentVariant,
-                              imagePosition: event.target.value,
-                            }))
-                          }
-                          className="field-control"
-                          placeholder="center center"
-                        />
-                      </label>
-                    </div>
-
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between gap-3">
-                        <p className="text-sm font-semibold text-[var(--color-ink)]">Sizes and stock</p>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            updateVariant(variantIndex, (currentVariant) => ({
-                              ...currentVariant,
-                              sizes: [...currentVariant.sizes, { label: "Standard", stock: 0 }],
-                            }))
-                          }
-                          className="ghost-button"
-                        >
-                          Add size row
-                        </button>
-                      </div>
-
-                      {variant.sizes.map((size, sizeIndex) => (
-                        <div
-                          key={`${variantIndex}-${sizeIndex}-${size.label || "size"}`}
-                          className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_9rem_auto]"
-                        >
-                          <input
-                            list="admin-size-options"
-                            value={size.label}
-                            onChange={(event) =>
-                              updateSize(variantIndex, sizeIndex, (currentSize) => ({
-                                ...currentSize,
-                                label: event.target.value,
-                              }))
-                            }
-                            className="field-control"
-                            placeholder="Standard"
-                          />
-                          <input
-                            type="number"
-                            min={0}
-                            value={size.stock}
-                            onChange={(event) =>
-                              updateSize(variantIndex, sizeIndex, (currentSize) => ({
-                                ...currentSize,
-                                stock: Number(event.target.value) || 0,
-                              }))
-                            }
-                            className="field-control"
-                          />
-                          <button
-                            type="button"
-                            onClick={() =>
-                              updateVariant(variantIndex, (currentVariant) => ({
-                                ...currentVariant,
-                                sizes: currentVariant.sizes.filter(
-                                  (_, currentIndex) => currentIndex !== sizeIndex,
-                                ),
-                              }))
-                            }
-                            className="ghost-button"
-                            disabled={variant.sizes.length === 1}
-                          >
-                            Remove
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                );
-              })}
+            <div className="rounded-[1.2rem] border border-[rgba(32,24,20,0.08)] bg-[rgba(246,241,234,0.6)] px-4 py-4">
+              <div className="flex flex-wrap items-center gap-3">
+                <StatusBadge status={draftInventory.status} />
+                <p className="text-sm font-medium text-[var(--color-ink)]">
+                  {draftInventory.quantity} total pieces
+                </p>
+                <p className="text-sm text-[rgba(29,29,31,0.56)]">
+                  Automatic status: {formatInventoryStatusLabel(draftInventory.autoStatus)}
+                </p>
+              </div>
             </div>
 
-            <button
-              type="button"
-              onClick={() =>
-                updateDraftField("variants", [
-                  ...draft.variants,
-                  {
-                    color: "",
-                    swatch: "#c9b39b",
-                    finish: "",
-                    imageSrc: "",
-                    imageAlt: "",
-                    imagePosition: "center center",
-                    sizes: [{ label: "Standard", stock: 0 }],
-                  },
-                ])
-              }
-              className="ghost-button"
-            >
-              Add colorway
-            </button>
+            <div className="grid gap-4 md:grid-cols-2">
+              <label className="space-y-2">
+                <span className="field-label">Low stock threshold</span>
+                <input
+                  type="number"
+                  min={1}
+                  value={draft.inventoryThreshold}
+                  onChange={(event) =>
+                    updateDraftField("inventoryThreshold", Number(event.target.value) || 1)
+                  }
+                  className="field-control"
+                />
+              </label>
+
+              <label className="space-y-2">
+                <span className="field-label">Manual stock status override</span>
+                <select
+                  value={draft.inventoryStatusOverride ?? ""}
+                  onChange={(event) =>
+                    updateDraftField(
+                      "inventoryStatusOverride",
+                      event.target.value === ""
+                        ? null
+                        : (event.target.value as CatalogInventoryStatus),
+                    )
+                  }
+                  className="field-control"
+                >
+                  <option value="">Automatic from stock</option>
+                  <option value="in_stock">In stock</option>
+                  <option value="low_stock">Low stock</option>
+                  <option value="sold_out">Sold out</option>
+                </select>
+              </label>
+            </div>
+
+            <ToggleField
+              label="Published on storefront"
+              checked={draft.isPublished}
+              onChange={(checked) => updateDraftField("isPublished", checked)}
+              hint="Turn this off to hide the bag without deleting it."
+            />
+          </Section>
+
+          <Section
+            title="Optional settings"
+            description="Only open this if the owner needs more control over extra notes or storefront placement."
+          >
+            <details className="rounded-[1.25rem] border border-[rgba(32,24,20,0.08)] bg-[rgba(246,241,234,0.45)] p-4">
+              <summary className="cursor-pointer text-sm font-semibold text-[var(--color-ink)]">
+                Open optional settings
+              </summary>
+
+              <div className="mt-5 grid gap-4 sm:grid-cols-2">
+                <label className="space-y-2">
+                  <span className="field-label">Slug</span>
+                  <input
+                    value={draft.slug}
+                    onChange={(event) => {
+                      setSlugTouched(true);
+                      updateDraftField("slug", slugifyAdminProductName(event.target.value));
+                    }}
+                    className="field-control"
+                    placeholder="david-jones-taupe-carryall"
+                  />
+                </label>
+
+                <label className="space-y-2">
+                  <span className="field-label">Display order</span>
+                  <input
+                    type="number"
+                    min={0}
+                    value={draft.displayOrder}
+                    onChange={(event) =>
+                      updateDraftField("displayOrder", Number(event.target.value) || 0)
+                    }
+                    className="field-control"
+                  />
+                </label>
+
+                <label className="space-y-2">
+                  <span className="field-label">Occasion note</span>
+                  <input
+                    value={draft.occasion}
+                    onChange={(event) => updateDraftField("occasion", event.target.value)}
+                    className="field-control"
+                    placeholder="Workday carry"
+                  />
+                </label>
+
+                <label className="space-y-2">
+                  <span className="field-label">Material</span>
+                  <input
+                    value={draft.material}
+                    onChange={(event) => updateDraftField("material", event.target.value)}
+                    className="field-control"
+                    placeholder="Pebbled faux leather"
+                  />
+                </label>
+
+                <label className="space-y-2">
+                  <span className="field-label">Detail note</span>
+                  <input
+                    value={draft.detail}
+                    onChange={(event) => updateDraftField("detail", event.target.value)}
+                    className="field-control"
+                    placeholder="Zip closure, detachable strap"
+                  />
+                </label>
+
+                <label className="space-y-2">
+                  <span className="field-label">Dimensions</span>
+                  <input
+                    value={draft.dimensions}
+                    onChange={(event) => updateDraftField("dimensions", event.target.value)}
+                    className="field-control"
+                    placeholder="24 x 16 x 8 cm"
+                  />
+                </label>
+
+                <label className="space-y-2">
+                  <span className="field-label">Strap length</span>
+                  <input
+                    value={draft.strapLength}
+                    onChange={(event) => updateDraftField("strapLength", event.target.value)}
+                    className="field-control"
+                    placeholder="Adjustable shoulder strap"
+                  />
+                </label>
+
+                <label className="space-y-2">
+                  <span className="field-label">Hardware finish</span>
+                  <input
+                    value={draft.hardwareFinish}
+                    onChange={(event) => updateDraftField("hardwareFinish", event.target.value)}
+                    className="field-control"
+                    placeholder="Brushed gold hardware"
+                  />
+                </label>
+
+                <label className="space-y-2">
+                  <span className="field-label">Main image alt</span>
+                  <input
+                    value={draft.imageAlt}
+                    onChange={(event) => updateDraftField("imageAlt", event.target.value)}
+                    className="field-control"
+                    placeholder="Describe the featured image"
+                  />
+                </label>
+
+                <label className="space-y-2">
+                  <span className="field-label">Main image position</span>
+                  <input
+                    value={draft.imagePosition}
+                    onChange={(event) => updateDraftField("imagePosition", event.target.value)}
+                    className="field-control"
+                    placeholder="center center"
+                  />
+                </label>
+
+                <label className="space-y-2 sm:col-span-2">
+                  <span className="field-label">Badges</span>
+                  <textarea
+                    value={draft.badges.join(", ")}
+                    onChange={(event) => updateDraftField("badges", parseListInput(event.target.value))}
+                    className="field-control min-h-[5rem]"
+                    placeholder="Best seller, Office carry"
+                  />
+                </label>
+
+                <label className="space-y-2 sm:col-span-2">
+                  <span className="field-label">Tags</span>
+                  <textarea
+                    value={(draft.tags ?? []).join(", ")}
+                    onChange={(event) => updateDraftField("tags", parseListInput(event.target.value))}
+                    className="field-control min-h-[5rem]"
+                    placeholder="taupe, structured, office"
+                  />
+                </label>
+              </div>
+
+              <div className="mt-5 grid gap-4 sm:grid-cols-2">
+                <ToggleField
+                  label="Featured bag"
+                  checked={draft.isFeatured}
+                  onChange={(checked) => updateDraftField("isFeatured", checked)}
+                  hint="Shows earlier in curated storefront sections."
+                />
+                <ToggleField
+                  label="New arrival"
+                  checked={draft.isNewArrival}
+                  onChange={(checked) => updateDraftField("isNewArrival", checked)}
+                  hint="Places the bag into the new-arrivals logic."
+                />
+                <ToggleField
+                  label="Trending"
+                  checked={draft.isTrending}
+                  onChange={(checked) => updateDraftField("isTrending", checked)}
+                  hint="Marks the bag as popular in recommendations."
+                />
+                <ToggleField
+                  label="Archived"
+                  checked={draft.isArchived}
+                  onChange={(checked) => updateDraftField("isArchived", checked)}
+                  hint="Keeps the product in admin but removes it from public browsing."
+                />
+              </div>
+            </details>
           </Section>
         </form>
       </div>

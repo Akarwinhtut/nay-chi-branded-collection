@@ -26,8 +26,8 @@ const policySections = [
     title: "How ordering works",
     points: [
       "The website shows the available styles and helps customers send an order request.",
-      "Customers choose the item, color, size, and quantity, then send the request through Telegram or email.",
-      "An order is confirmed only after the shop checks stock and confirms the final handoff.",
+      "Customers choose the item, color, and size, then send the request through Telegram, email, or another chat app using the copied order note.",
+      "An order is confirmed only after the shop checks stock and confirms the final handoff details.",
     ],
   },
   {
@@ -35,7 +35,7 @@ const policySections = [
     title: "Payment and short holds",
     points: [
       "Short same-day holds may be offered for in-stock items.",
-      "Payment method and timing are confirmed directly with the customer.",
+      "Payment method, timing, and any deposit request are confirmed directly with the customer.",
       "If payment is not completed within the agreed period, the item may return to stock.",
     ],
   },
@@ -44,7 +44,7 @@ const policySections = [
     title: "Pickup, local drop-off, and handoff",
     points: [
       "Customers may arrange store pickup, local delivery, or another agreed handoff.",
-      "Delivery timing, fees, and destination are confirmed after the reservation is accepted.",
+      "Delivery timing, fees, and destination are confirmed only after the reservation is accepted.",
       "The shop may request a reconfirmation before dispatch for limited items.",
     ],
   },
